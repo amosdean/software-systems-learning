@@ -7,10 +7,15 @@
 char ** parseInput(char buffer[]) {
 	char *token = strtok(buffer, " ");	
 	char **tokens = malloc(sizeof(char*) * 10);
-	for (int i = 0; token != NULL && i < 10; i++) {
+	// while(token != NULL) {
+	// }
+	int i;
+	for (i = 0; token != NULL && i < 10; i++) {
 		tokens[i] = token;
-		token = strtok(NULL, "\n");
+		token = strtok(NULL, " ");
+	
 	}
+	tokens[i-1] = strtok(tokens[i-1], "\n");
 	return tokens;
 }
 
@@ -35,7 +40,7 @@ int main(void) {
 
 		printf("\nShell>");
 		fgets(buffer, sizeof(buffer), stdin);
-		if(*buffer == 'q' || strcmp(buffer, "quit") || strcmp(buffer, "exit") ) return 0;
+		if(*buffer == 'q' || !strcmp(buffer, "quit") || !strcmp(buffer, "exit") ) return 0;
 		tokens = parseInput(buffer);
 
 		executeCommand(tokens);
