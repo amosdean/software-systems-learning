@@ -7,10 +7,9 @@
 char ** parseInput(char buffer[]) {
 	char *token = strtok(buffer, " ");	
 	char **tokens = malloc(sizeof(char*) * 10);
-	int i = 0;
 	for (int i = 0; token != NULL && i < 10; i++) {
 		tokens[i] = token;
-		token = strtok(NULL, " ");
+		token = strtok(NULL, "\n");
 	}
 	return tokens;
 }
@@ -20,23 +19,27 @@ void executeCommand(char *tokens[]) {
 	int returnStatus;
 	if (pid == 0) {
 		execvp(tokens[0], tokens);	
-		perror("execvp");
+		perror("execvp error");
 		exit(1);
 	}
 	else {
 		waitpid(pid, &returnStatus, 0);
-		printf("father");
 	}
 
 }
 
-int main(int argc, char *argv[]) {
+int main(void) {
 	char buffer[100];
-	printf("\nShell>");
-	fgets(buffer, sizeof(buffer), stdin);
+	char **tokens;
+	while(1) {
 
-	char **tokens = parseInput(buffer);
-	executeCommand(tokens);
+		printf("\nShell>");
+		fgets(buffer, sizeof(buffer), stdin);
+		if(*buffer == 'q' || strcmp(buffer, "quit") || strcmp(buffer, "exit") ) return 0;
+		tokens = parseInput(buffer);
+
+		executeCommand(tokens);
+	}
 	// printf("\n%s", buffer);
 	// printf("\n%s", tokens[0]);
 }
