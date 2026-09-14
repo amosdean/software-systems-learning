@@ -4,6 +4,8 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
+#include "commands.h"
+
 char ** parseInput(char buffer[]) {
 	char *token = strtok(buffer, " ");	
 	char **tokens = malloc(sizeof(char*) * 10);
@@ -19,7 +21,7 @@ char ** parseInput(char buffer[]) {
 	return tokens;
 }
 
-void executeCommand(char *tokens[]) {
+void executeProgram(char *tokens[]) {
 	pid_t pid = fork();
 	int returnStatus;
 	if (pid == 0) {
@@ -30,20 +32,44 @@ void executeCommand(char *tokens[]) {
 	else {
 		waitpid(pid, &returnStatus, 0);
 	}
+}
 
+void commands(char **tokens) {
+	char *keywords[] = {
+		"cd"
+		,"q"
+		,"quit"
+		,"exit"
+	};
+	void (*functions[])(char **) = {
+		cd
+		,q
+		,quit
+		,exit
+	};
+	for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
+		if (!strcmp(tokens[0], keywords[i])) {
+			functions[i](tokens);
+			return;
+		}
+	}
 }
 
 int main(void) {
 	char buffer[100];
 	char **tokens;
 	while(1) {
-
-		printf("\nShell>");
+		char pwd[100];
+		getcwd(pwd, sizeof(pwd));
+		printf("Shell>%s$ ", pwd);
 		fgets(buffer, sizeof(buffer), stdin);
+
 		if(*buffer == 'q' || !strcmp(buffer, "quit") || !strcmp(buffer, "exit") ) return 0;
 		tokens = parseInput(buffer);
-
-		executeCommand(tokens);
+		if(!strcmp(tokens[0], "cd"))
+			cd(tokens);
+			 
+		executeProgram(tokens);
 	}
 	// printf("\n%s", buffer);
 	// printf("\n%s", tokens[0]);

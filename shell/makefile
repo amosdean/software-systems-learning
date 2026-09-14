@@ -1,8 +1,8 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11 -D_POSIX_C_SOURCE=200809L
+CFLAGS = -Wall -Wextra -std=c11 -D_POSIX_C_SOURCE=200809L -g
 
 TARGET = shell
-SOURCE = shell.c
+SOURCE = shell.c commands.c
 OBJS = $(SOURCE:.c=.o)
 
 .PHONY: all run clean
@@ -10,7 +10,7 @@ OBJS = $(SOURCE:.c=.o)
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) $(SOURCE) -o $(TARGET)
+	$(CC) $(CFLAGS) $(OBJS) -o $(TARGET)
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
