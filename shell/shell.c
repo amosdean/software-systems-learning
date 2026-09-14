@@ -34,25 +34,24 @@ void executeProgram(char *tokens[]) {
 	}
 }
 
-void commands(char **tokens) {
+int commands(char **tokens) {
 	char *keywords[] = {
 		"cd"
 		,"q"
 		,"quit"
-		,"exit"
 	};
 	void (*functions[])(char **) = {
 		cd
 		,q
 		,quit
-		,exit
 	};
 	for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
 		if (!strcmp(tokens[0], keywords[i])) {
 			functions[i](tokens);
-			return;
+			return 1;
 		}
 	}
+	return 0;
 }
 
 int main(void) {
@@ -64,11 +63,13 @@ int main(void) {
 		printf("Shell>%s$ ", pwd);
 		fgets(buffer, sizeof(buffer), stdin);
 
-		if(*buffer == 'q' || !strcmp(buffer, "quit") || !strcmp(buffer, "exit") ) return 0;
 		tokens = parseInput(buffer);
-		if(!strcmp(tokens[0], "cd"))
-			cd(tokens);
-			 
+
+		// run shell commands
+		if(commands(tokens) == 1)
+			continue;
+		
+		// non-shell programs
 		executeProgram(tokens);
 	}
 	// printf("\n%s", buffer);
