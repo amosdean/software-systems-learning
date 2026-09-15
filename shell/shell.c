@@ -6,18 +6,19 @@
 
 #include "commands.h"
 
+int tokensLength;
+
 char ** parseInput(char buffer[]) {
 	char *token = strtok(buffer, " ");	
 	char **tokens = malloc(sizeof(char*) * 10);
-	// while(token != NULL) {
-	// }
 	int i;
 	for (i = 0; token != NULL && i < 10; i++) {
 		tokens[i] = token;
 		token = strtok(NULL, " ");
 	
 	}
-	tokens[i-1] = strtok(tokens[i-1], "\n");
+	tokens[i-1] = strtok(tokens[i-1], "\n"); // remove stray newline character
+	tokensLength = i;
 	return tokens;
 }
 
@@ -40,14 +41,14 @@ int commands(char **tokens) {
 		,"q"
 		,"quit"
 	};
-	void (*functions[])(char **) = {
+	void (*functions[])(char **, int) = {
 		cd
 		,q
 		,quit
 	};
 	for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
 		if (!strcmp(tokens[0], keywords[i])) {
-			functions[i](tokens);
+			functions[i](tokens, tokensLength);
 			return 1;
 		}
 	}

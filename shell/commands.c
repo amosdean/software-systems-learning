@@ -3,10 +3,21 @@
 #include <string.h>
 #include <stdlib.h>
 
-void cd(char *tokens[]) {
+void cd(char *tokens[], int tokensLength) {
     char pwd[100];
+
+    // go to home directory
+    if(tokensLength == 1) {
+        char *home = getenv("HOME");
+        chdir(home);
+    }
+
+    else if(tokensLength > 2) {
+        printf("ERROR: Too many arguments\n");
+    }
+
     // go to parent directory
-    if(!strcmp("..", tokens[1])) {
+    else if(!strcmp("..", tokens[1])) {
         getcwd(pwd, sizeof(pwd));
         char *lastSlash = strrchr(pwd, '/');
         *lastSlash = '\0';
@@ -14,25 +25,28 @@ void cd(char *tokens[]) {
     }
 
     // to absolute directory
-    if(tokens[1][0] == '/') {
-        // getcwd(pwd, sizeof(pwd));
-        // char *lastSlash = strrchr(pwd, '/');
-        // *lastSlash = '\0';
-        chdir(tokens[1]);
+    else if(tokens[1][0] == '/') {
+        if(chdir(tokens[1]) == -1) {
+            printf("ERROR: Invalid path\n");
+        }
     }
 
     // to relative directory
-    if(tokens[1][0] == '.') {
-        getcwd(pwd, sizeof(pwd));
-        char temp[100];
-        int i;
-        for(i = 1; tokens[1][i] != '\0'; i++) {
-            temp[i-1] = tokens[1][i];
+    else if(tokens[1][0] == '.') {
+        if(sizeof(tokens[1]) / (sizeof(tokens[1][0]) > 1) && tokens[1][1] == '.') {
+            getcwd(pwd, sizeof(pwd));
+            char temp[100];
+            int i;
+            for(i = 1; tokens[1][i] != '\0'; i++) {
+                temp[i-1] = tokens[1][i];
+            }
+            temp[i] = '\0';
+            strncat(pwd, temp, 100);
+            chdir(pwd);
         }
-        temp[i] = '\0';
-        strncat(pwd, temp, 100);
-        chdir(pwd);
+        // else case stay in current directory
     }
+
 }
 void quit() {
     exit(0);
