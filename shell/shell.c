@@ -40,17 +40,24 @@ int commands(char **tokens) {
 		"cd"
 		,"q"
 		,"quit"
+		,"pwd"
 	};
 	void (*functions[])(char **, int) = {
 		cd
 		,q
 		,quit
+		,pwd
 	};
 	for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
 		if (!strcmp(tokens[0], keywords[i])) {
 			functions[i](tokens, tokensLength);
 			return 1;
 		}
+	}
+	// set variable
+	if(strchr(tokens[0], '=') != NULL) {
+		setVariable(tokens);
+		return 1;
 	}
 	return 0;
 }
@@ -61,7 +68,7 @@ int main(void) {
 	while(1) {
 		char pwd[100];
 		getcwd(pwd, sizeof(pwd));
-		printf("Shell>%s$ ", pwd);
+		printf("\nShell>%s$ ", pwd);
 		fgets(buffer, sizeof(buffer), stdin);
 
 		tokens = parseInput(buffer);
@@ -70,9 +77,14 @@ int main(void) {
 		if(commands(tokens) == 1)
 			continue;
 		
+		// expand variables
+		for(int i = 1; i < tokensLength; i++) {
+			if(tokens[i][0] == '$') {
+				tokens[i] = getenv(tokens[i] + sizeof(char));
+			}
+		}
+
 		// non-shell programs
 		executeProgram(tokens);
 	}
-	// printf("\n%s", buffer);
-	// printf("\n%s", tokens[0]);
 }

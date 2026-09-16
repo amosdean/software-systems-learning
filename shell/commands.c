@@ -48,6 +48,18 @@ void cd(char *tokens[], int tokensLength) {
     }
 
 }
+
+void pwd() {
+    char pwd[100];
+    getcwd(pwd, sizeof(pwd));
+    printf("%s", pwd);
+}
+void setVariable(char *tokens[]) {
+    char *var = strtok(tokens[0], "=");
+    char *val = strtok(NULL, "\0");
+    setenv(var, val, 1); 
+}
+
 void quit() {
     exit(0);
 }
