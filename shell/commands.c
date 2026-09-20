@@ -2,6 +2,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include "variables.h"
 
 void cd(char *tokens[], int tokensLength) {
     char pwd[100];
@@ -54,10 +55,9 @@ void pwd() {
     getcwd(pwd, sizeof(pwd));
     printf("%s", pwd);
 }
-void setVariable(char *tokens[]) {
-    char *var = strtok(tokens[0], "=");
-    char *val = strtok(NULL, "\0");
-    setenv(var, val, 1); 
+void setExternalVariable(char *tokens[]) {
+    char *val = getVariableValue(tokens[1]);
+    setenv(tokens[1] + 1, val, 1); 
 }
 
 void quit() {

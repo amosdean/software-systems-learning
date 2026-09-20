@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -5,6 +6,7 @@
 #include <sys/wait.h>
 
 #include "commands.h"
+#include "variables.h"
 
 int tokensLength;
 
@@ -22,10 +24,26 @@ char ** parseInput(char buffer[]) {
 	return tokens;
 }
 
+void redirect(char *output) {
+	int fDes = open(output, O_WRONLY | O_CREAT | O_TRUNC, 0644); 
+	if(fDes == -1) return;
+	dup2(fDes, STDOUT_FILENO);
+	close(fDes);
+}
+
 void executeProgram(char *tokens[]) {
 	pid_t pid = fork();
 	int returnStatus;
+
 	if (pid == 0) {
+		for(int i = 0; i < tokensLength; i++) {
+			if(tokens[i][0] == '>') {
+				redirect(tokens[i+1]);
+				tokens[i] = NULL;
+				tokens[i+1] = NULL;
+				break;
+			}
+		}
 		execvp(tokens[0], tokens);	
 		perror("execvp error");
 		exit(1);
@@ -41,12 +59,14 @@ int commands(char **tokens) {
 		,"q"
 		,"quit"
 		,"pwd"
+		,"extern"
 	};
 	void (*functions[])(char **, int) = {
 		cd
 		,q
 		,quit
 		,pwd
+		,setExternalVariable
 	};
 	for (int i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
 		if (!strcmp(tokens[0], keywords[i])) {
@@ -56,7 +76,7 @@ int commands(char **tokens) {
 	}
 	// set variable
 	if(strchr(tokens[0], '=') != NULL) {
-		setVariable(tokens);
+		setVariable(tokens[0]);
 		return 1;
 	}
 	return 0;
@@ -65,12 +85,14 @@ int commands(char **tokens) {
 int main(void) {
 	char buffer[100];
 	char **tokens;
+	char pwd[100];
 	while(1) {
-		char pwd[100];
+		// shell prompt
 		getcwd(pwd, sizeof(pwd));
 		printf("\nShell>%s$ ", pwd);
 		fgets(buffer, sizeof(buffer), stdin);
 
+		// parse
 		tokens = parseInput(buffer);
 
 		// run shell commands
@@ -80,11 +102,12 @@ int main(void) {
 		// expand variables
 		for(int i = 1; i < tokensLength; i++) {
 			if(tokens[i][0] == '$') {
-				tokens[i] = getenv(tokens[i] + sizeof(char));
+				tokens[i] = getVariableValue(tokens[i]);//getenv(tokens[i] + sizeof(char));
 			}
 		}
 
 		// non-shell programs
 		executeProgram(tokens);
 	}
+	return 0;
 }
