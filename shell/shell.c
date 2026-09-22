@@ -25,14 +25,13 @@ char ** parseInput(char buffer[]) {
 }
 
 void redirect(char *output, int append) {
-	if(append == 1) {
-		int fDes = open(output, O_WRONLY | O_CREAT | O_APPEND, 0644); 
-		if(fDes == -1) return;
-		dup2(fDes, STDOUT_FILENO);
-		close(fDes);
-		return;
-	};
-	int fDes = open(output, O_WRONLY | O_CREAT | O_TRUNC, 0644); 
+	int fDes = open(output, O_WRONLY | O_CREAT | (append == 1 ? O_APPEND : O_TRUNC), 0644); 
+	// if(append == 1) {
+	// 	int fDes = open(output, O_WRONLY | O_CREAT | O_APPEND, 0644); 
+	// }
+	// else {
+	// 	fDes = open(output, O_WRONLY | O_CREAT | O_TRUNC, 0644); 
+	// }
 	if(fDes == -1) return;
 	dup2(fDes, STDOUT_FILENO);
 	close(fDes);
@@ -45,7 +44,9 @@ void executeProgram(char *tokens[]) {
 	if (pid == 0) {
 		for(int i = 0; i < tokensLength; i++) {
 			if(tokens[i][0] == '>') {
-				redirect(tokens[i+1], tokens[i][1] == NULL ? 0:1);
+				// printf("in tokens");
+				// printf("%c", tokens[i][1]);
+				redirect(tokens[i+1], tokens[i][1] == '>' ? 1:0);
 				tokens[i] = NULL;
 				tokens[i+1] = NULL;
 				break;

@@ -10,6 +10,13 @@
             "MIMode": "gdb",
             "miDebuggerPath": "/usr/bin/gdb",
             "preLaunchTask": "Build shell"
+            ,"setupCommands": [
+                {
+                    "description": "Follow child process after fork",
+                    "text": "set follow-fork-mode child",
+                    "ignoreFailures": false
+                }
+            ]
         }
     ]
 }
