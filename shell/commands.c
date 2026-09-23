@@ -4,16 +4,16 @@
 #include <stdlib.h>
 #include "variables.h"
 
-void cd(char *tokens[], int tokensLength) {
+void cd(char *tokens[]) {
     char pwd[100];
 
     // go to home directory
-    if(tokensLength == 1) {
+    if(tokens[1] == NULL) {
         char *home = getenv("HOME");
         chdir(home);
     }
 
-    else if(tokensLength > 2) {
+    else if(tokens[2] != NULL) {
         printf("ERROR: Too many arguments\n");
     }
 
@@ -21,6 +21,10 @@ void cd(char *tokens[], int tokensLength) {
     else if(!strcmp("..", tokens[1])) {
         getcwd(pwd, sizeof(pwd));
         char *lastSlash = strrchr(pwd, '/');
+        if(lastSlash == NULL) { // only happens when at already at root since absolute path
+            printf("ERROR: No parent to root directory\n");
+            quit(); 
+        }
         *lastSlash = '\0';
         chdir(pwd);
     }
