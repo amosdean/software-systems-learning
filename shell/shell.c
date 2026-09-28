@@ -8,7 +8,10 @@
 #include "commands.h"
 #include "variables.h"
 
+int pid = -1;
+int preforked = 0;
 // int tokensLength;
+// void file_pipe()
 
 char ** parseInput(char buffer[]) {
 	char *token = strtok(buffer, " ");	
@@ -38,7 +41,9 @@ void redirect(char *file, char io, int append) {
 }
 
 void executeProgram(char *tokens[]) {
-	pid_t pid = fork();
+	// int pid = 1;
+	if(preforked == 0)
+		pid = fork();
 	int returnStatus;
 
 	if (pid == 0) {
@@ -60,6 +65,25 @@ void executeProgram(char *tokens[]) {
 	else {
 		waitpid(pid, &returnStatus, 0);
 	}
+}
+
+void arraySplitter(char *array[], int splitIndex, char **left[], char **right[]) {
+	// int arraySize = sizeof(array) / sizeof(array[0]);
+	int arraySize = 0;
+	while (array[arraySize] != NULL) {
+		arraySize++;
+	}
+	int rightSize = arraySize - splitIndex - 1; // minus 1, skipping |
+	*left = malloc((splitIndex) * sizeof(array[0]));
+	*right = malloc(rightSize * sizeof(array[0]));
+	for(int i = 0; i < splitIndex; i++) {
+		(*left)[i] = array[i];
+	}
+	(*left)[splitIndex] = NULL;
+	for(int i = splitIndex + 1; i < arraySize; i++) {
+		(*right)[i - splitIndex - 1] = array[i];
+	}
+	(*right)[rightSize] = NULL;
 }
 
 int commands(char **tokens) {
@@ -91,6 +115,58 @@ int commands(char **tokens) {
 	return 0;
 }
 
+char ** pipeline(char *tokens[]) {
+		// ls | grep ".c"	
+	int fD[2];
+	char **left = NULL;
+	char **right = NULL;
+	for(int i = 0; tokens[i] != NULL; i++) {
+		if(tokens[i][0] == '|') {
+			if(pipe(fD) == -1) {
+				printf("ERROR: Could not open pipe");
+				quit();
+			}
+			arraySplitter(tokens, i, &left, &right);
+			int pid = fork();
+			preforked = 1;
+			if(pid == 0) {
+				close(fD[0]);
+				dup2(fD[1], STDOUT_FILENO);	
+				return left;
+			}
+			else {
+				pid = fork();
+				if(pid == 0) {
+					close(fD[1]);
+					dup2(fD[0], STDIN_FILENO);
+					return right;
+				}
+				// return tokens; // do not return - could be more pipes
+			}
+		}
+	}
+	return tokens;
+}
+
+void tokenHandler(char **tokens) {
+		// run shell commands
+		if(commands(tokens) == 1)
+			return;
+		
+		// expand variables
+		for(int i = 1; tokens[i] != NULL; i++) {
+			if(tokens[i][0] == '$') {
+				tokens[i] = getVariableValue(tokens[i]);//getenv(tokens[i] + sizeof(char));
+			}
+		}
+
+		tokens = pipeline(tokens);
+
+		// non-shell programs
+		executeProgram(tokens);
+		preforked = 0;
+}
+
 int main(void) {
 	char buffer[100];
 	char **tokens;
@@ -104,19 +180,7 @@ int main(void) {
 		// parse
 		tokens = parseInput(buffer);
 
-		// run shell commands
-		if(commands(tokens) == 1)
-			continue;
-		
-		// expand variables
-		for(int i = 1; tokens[i] != NULL; i++) {
-			if(tokens[i][0] == '$') {
-				tokens[i] = getVariableValue(tokens[i]);//getenv(tokens[i] + sizeof(char));
-			}
-		}
-
-		// non-shell programs
-		executeProgram(tokens);
+		tokenHandler(tokens);	
 	}
 	return 0;
 }
