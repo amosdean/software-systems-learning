@@ -8,8 +8,8 @@
 #include "commands.h"
 #include "variables.h"
 
-int pid = -1;
-int preforked = 0;
+// int pid = -1;
+// int preforked = 0;
 // int tokensLength;
 // void file_pipe()
 
@@ -40,13 +40,13 @@ void redirect(char *file, char io, int append) {
 	close(fDes);
 }
 
-void executeProgram(char *tokens[]) {
-	// int pid = 1;
+void executeProgram(char *tokens[], int preforked) {
+	int pid;
 	if(preforked == 0)
 		pid = fork();
 	int returnStatus;
 
-	if (pid == 0) {
+	if (preforked != 0 || pid == 0) {
 		// check for redirection
 		for(int i = 0; tokens[i] != NULL; i++) {
 			if(tokens[i][0] == '>' || tokens[i][0] == '<') {
@@ -120,6 +120,9 @@ char ** pipeline(char *tokens[]) {
 	int fD[2];
 	char **left = NULL;
 	char **right = NULL;
+	int pid_one = NULL;
+	int pid_two = NULL;
+	int returnStatus;
 	for(int i = 0; tokens[i] != NULL; i++) {
 		if(tokens[i][0] == '|') {
 			if(pipe(fD) == -1) {
@@ -127,25 +130,29 @@ char ** pipeline(char *tokens[]) {
 				quit();
 			}
 			arraySplitter(tokens, i, &left, &right);
-			int pid = fork();
-			preforked = 1;
-			if(pid == 0) {
+			pid_one = fork();
+			// preforked = 1;
+			if(pid_one == 0) {
 				close(fD[0]);
 				dup2(fD[1], STDOUT_FILENO);	
-				return left;
+				executeProgram(left, 1);
 			}
 			else {
-				pid = fork();
-				if(pid == 0) {
+				pid_two = fork();
+				if(pid_two == 0) {
 					close(fD[1]);
 					dup2(fD[0], STDIN_FILENO);
-					return right;
+					executeProgram(right, 1);
 				}
 				// return tokens; // do not return - could be more pipes
 			}
 		}
 	}
-	return tokens;
+	close(fD[0]);
+	close(fD[1]);
+	waitpid(pid_one, &returnStatus, 0);
+	waitpid(pid_two, &returnStatus, 0);
+	return pid_one == NULL ? tokens : NULL;
 }
 
 void tokenHandler(char **tokens) {
@@ -162,9 +169,9 @@ void tokenHandler(char **tokens) {
 
 		tokens = pipeline(tokens);
 
-		// non-shell programs
-		executeProgram(tokens);
-		preforked = 0;
+		if(tokens != NULL)
+			// non-shell programs
+			executeProgram(tokens, 0);
 }
 
 int main(void) {
