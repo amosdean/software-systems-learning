@@ -181,6 +181,7 @@ int main(void) {
 	printf("Current implementations:\n");
 	printf(" * Basic file path movement (cd)\n");
 	printf(" * Program execution\n");
+	printf(" * Variables\n");
 	printf(" * I/O Redirection (<,>)\n");
 	printf(" * Pipes (|)\n");
 	printf("==========================================================================\n");
