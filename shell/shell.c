@@ -46,7 +46,7 @@ void executeProgram(char *tokens[], int preforked) {
 		pid = fork();
 	int returnStatus;
 
-	if (preforked != 0 || pid == 0) {
+	if(preforked == 1 || pid == 0) {
 		// check for redirection
 		for(int i = 0; tokens[i] != NULL; i++) {
 			if(tokens[i][0] == '>' || tokens[i][0] == '<') {
@@ -67,7 +67,7 @@ void executeProgram(char *tokens[], int preforked) {
 	}
 }
 
-void arraySplitter(char *array[], int splitIndex, char **left[], char **right[]) {
+void arraySplitter(char *array[], int startIndex, int splitIndex, char **left[], char **right[]) {
 	// int arraySize = sizeof(array) / sizeof(array[0]);
 	int arraySize = 0;
 	while (array[arraySize] != NULL) {
@@ -76,8 +76,8 @@ void arraySplitter(char *array[], int splitIndex, char **left[], char **right[])
 	int rightSize = arraySize - splitIndex - 1; // minus 1, skipping |
 	*left = malloc((splitIndex) * sizeof(array[0]));
 	*right = malloc(rightSize * sizeof(array[0]));
-	for(int i = 0; i < splitIndex; i++) {
-		(*left)[i] = array[i];
+	for(int i = startIndex; i < splitIndex; i++) {
+		(*left)[i - startIndex] = array[i];
 	}
 	(*left)[splitIndex] = NULL;
 	for(int i = splitIndex + 1; i < arraySize; i++) {
@@ -116,43 +116,40 @@ int commands(char **tokens) {
 }
 
 char ** pipeline(char *tokens[]) {
-		// ls | grep ".c"	
+		// ls | grep ".c" | wc
 	int fD[2];
 	char **left = NULL;
 	char **right = NULL;
 	int pid_one = NULL;
-	int pid_two = NULL;
+	// int pid_two = NULL;
 	int returnStatus;
+	int previous_i = 0;
 	for(int i = 0; tokens[i] != NULL; i++) {
 		if(tokens[i][0] == '|') {
 			if(pipe(fD) == -1) {
 				printf("ERROR: Could not open pipe");
 				quit();
 			}
-			arraySplitter(tokens, i, &left, &right);
-			pid_one = fork();
-			// preforked = 1;
+			arraySplitter(tokens, previous_i, i, &left, &right);
+			previous_i = i + 1;
+			// if(pid_one == NULL) {
+				pid_one = fork();
+			// }
 			if(pid_one == 0) {
 				close(fD[0]);
 				dup2(fD[1], STDOUT_FILENO);	
 				executeProgram(left, 1);
 			}
 			else {
-				pid_two = fork();
-				if(pid_two == 0) {
-					close(fD[1]);
-					dup2(fD[0], STDIN_FILENO);
-					executeProgram(right, 1);
-				}
-				// return tokens; // do not return - could be more pipes
+				close(fD[1]);
+				dup2(fD[0], STDIN_FILENO);
+				// waitpid(pid_one, &returnStatus, 0);
 			}
-		}
+		}	
 	}
-	close(fD[0]);
-	close(fD[1]);
-	waitpid(pid_one, &returnStatus, 0);
-	waitpid(pid_two, &returnStatus, 0);
-	return pid_one == NULL ? tokens : NULL;
+	return right == NULL ? tokens : right;
+	// waitpid(pid_two, &returnStatus, 0);
+	// return pid_one == NULL ? tokens : NULL;
 }
 
 void tokenHandler(char **tokens) {
@@ -175,9 +172,18 @@ void tokenHandler(char **tokens) {
 }
 
 int main(void) {
+	int const STD_I = dup(STDIN_FILENO);
+	int const STD_O = dup(STDOUT_FILENO);
 	char buffer[100];
 	char **tokens;
 	char pwd[100];
+	printf("==========================================================================\n");
+	printf("Current implementations:\n");
+	printf(" * Basic file path movement (cd)\n");
+	printf(" * Program execution\n");
+	printf(" * I/O Redirection (<,>)\n");
+	printf(" * Pipes (|)\n");
+	printf("==========================================================================\n");
 	while(1) {
 		// shell prompt
 		getcwd(pwd, sizeof(pwd));
@@ -188,6 +194,10 @@ int main(void) {
 		tokens = parseInput(buffer);
 
 		tokenHandler(tokens);	
+
+		// reset stdio		
+		dup2(STD_I, STDIN_FILENO);
+		dup2(STD_O, STDOUT_FILENO);
 	}
 	return 0;
 }
