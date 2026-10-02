@@ -178,11 +178,11 @@ int main(void) {
 	char **tokens;
 	char pwd[100];
 	printf("==========================================================================\n");
-	printf("Current implementations:\n");
+	printf("Current Implementations:\n");
 	printf(" * Basic file path movement (cd)\n");
 	printf(" * Program execution\n");
 	printf(" * Variables\n");
-	printf(" * I/O Redirection (<,>)\n");
+	printf(" * I/O Redirection (<, >)\n");
 	printf(" * Pipes (|)\n");
 	printf("==========================================================================\n");
 	while(1) {
