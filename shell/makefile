@@ -1,6 +1,16 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -std=c11 -D_POSIX_C_SOURCE=200809L -g
 
+ifeq ($(OS),Windows_NT)
+	RM = del /Q
+	TARGET_SUFFIX = .exe
+	CLEAN_FILES = $(subst /,\,$(OBJS))
+else
+	RM = rm -f
+	TARGET_SUFFIX =
+	CLEAN_FILES = $(OBJS)
+endif
+
 TARGET = shell
 SOURCE = shell.c commands.c variables.c
 OBJS = $(SOURCE:.c=.o)
@@ -18,4 +28,4 @@ run: $(TARGET)
 	./$(TARGET)
 
 clean:
-	 rm -f $(OBJS) $(TARGET) 
+	$(RM) $(CLEAN_FILES) $(TARGET)$(TARGET_SUFFIX)
