@@ -18,7 +18,7 @@ enum TokenType {
     NOT_EQUAL,
 
     // Literals
-    IDENTIFIER, STRING, NUMBER,
+    // IDENTIFIER, STRING, I,
 
     END_OF_FILE
 };
@@ -35,6 +35,20 @@ struct Token {
     int line;
 };
 struct Token * scanTokens(char *src, size_t size);
+
+typedef enum Action {
+    TO_NUMBER
+    ,TO_WORD
+    ,CONT
+    ,ADD_TOKEN
+    ,ERR
+} Action;
+
+typedef enum CType {
+    LETTER,
+    NUMBER,
+    WHITESPACE
+} CType;
 
 
 #endif // lexer_H

@@ -4,6 +4,14 @@
 #include <ctype.h>
 #include "lexer.h"
 
+
+const Action TRANSITIONS[3][3] = {
+        //          LETTER    NUMBER     WHITESPACE 
+/* START */     {TO_WORD,    TO_NUMBER,   ADD_TOKEN},
+/* KEYWORD */   {CONT,       ERR,         ADD_TOKEN},
+/* NUMBER */    {ERR,        CONT,        ADD_TOKEN}
+};
+
 // Source
 char *source;
 int source_length;
@@ -21,12 +29,12 @@ int state;
 
 void addToken(enum TokenType type) {
     struct Token token;
-    char *str; 
+    char *str = calloc(100, sizeof(char)); 
 
     memcpy(str, source + cur_start, cur_index - cur_start);
     str[cur_index] = '\0';
 
-    printf("new string added: %s\n", str);
+    printf("string added: %s\n", str);
 
     token.lexeme = str;
     token.line = cur_line;
@@ -53,33 +61,36 @@ void scanToken() {
     
     char c = source[cur_start];
     int eot = 0;
+    Action action;
+    CType ctype;
     while(!eot) {
-        switch (state) {
-            case START:
-                if(isdigit(c)) {
-                    state = IN_NUMBER;
-                    printf("number: %c\n", c);
-                }
-                else if(isalpha(c)) {
-                    state = IN_IDENTIFIER;
-                    printf("letter: %c\n", c);
-                }
+        if(isdigit(c)){
+            ctype = NUMBER;
+        }
+        else if(isalpha(c)) {
+            ctype = LETTER;
+        }
+        // else if(isspace(c)) {
+        else {
+            ctype = WHITESPACE;
+        }
+        action = TRANSITIONS[state][ctype];
+        switch (action) {
+            case TO_WORD:
+                state = IN_IDENTIFIER;
                 break;
-            case IN_IDENTIFIER:
-                if(isspace(c)) {
-                    eot = 1;
-                }
-                else if(!isalpha(c)) {
-                    printf("ERROR: not letter: %c\n", c);
-                }
+            case TO_NUMBER:
+                state = IN_NUMBER;
                 break;
-            case IN_NUMBER:
-                if(isspace(c)) {
-                    eot = 1;
-                }
-                else if(isalpha(c)) {
-                    printf("ERROR: not number: %c\n", c);
-                }
+            case CONT:
+                break;
+            case ADD_TOKEN:
+                addToken(state);
+                eot = 1;
+                break;
+            case ERR:
+                printf("ERROR at line %d, index %d, for character %c\n",cur_line, cur_index, c);
+                eot = 1;
                 break;
         }
         c = advance();
@@ -87,7 +98,7 @@ void scanToken() {
             eot = 1;
         }
     }
-    addToken(state);
+    // addToken(state);
     state = START;
     // switch (c) {
     //     case '(': addToken(LEFT_PAREN); break;
@@ -105,7 +116,6 @@ void scanToken() {
 
 struct Token * scanTokens(char *src, size_t size) {
     source = src;
-    state = START;
 
     tokens = calloc(100, sizeof(struct Token));
     cur_start = 0;
@@ -113,6 +123,7 @@ struct Token * scanTokens(char *src, size_t size) {
     cur_line = 1;
     while (cur_index < (int) size) {
       cur_start = cur_index;
+      state = START;
       scanToken();
     }
 
