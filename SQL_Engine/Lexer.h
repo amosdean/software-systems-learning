@@ -2,7 +2,7 @@
 #define lexer_H
 
 enum TokenType {
-    // KEYWORD, IDENTIFIER, PUNCUATION, OPERATOR, CONSTANT, LITERAL,
+    KEYWORD, IDENTIFIER, PUNCUATION, OPERATOR, CONSTANT, LITERAL,
     // Keywords
     AND, OR, CASE, WHEN, END, ELSE, FALSE,
     PRINT, TRUE,
@@ -22,6 +22,22 @@ enum TokenType {
 
     END_OF_FILE
 };
+
+static const int number_of_keywords = 5;
+static const char *keywords[] = {
+    "CREATE",
+    "TABLE",
+    "SELECT",
+    "FROM",
+    "WHERE"
+};
+// typedef enum Keyword {
+    // CREATE,
+    // TABLE,
+    // SELECT,
+    // FROM,
+    // WHERE
+// } Keyword;
 
 enum lexerState {
     START

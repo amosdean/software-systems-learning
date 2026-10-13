@@ -2,12 +2,13 @@
 #include <stdlib.h>
 #include <regex.h>
 #include <ctype.h>
+#include <string.h>
 #include "lexer.h"
 
 
 const Action TRANSITIONS[3][3] = {
         //          LETTER    NUMBER     WHITESPACE 
-/* START */     {TO_WORD,    TO_NUMBER,   ADD_TOKEN},
+/* START */     {TO_WORD,    TO_NUMBER,   CONT},
 /* KEYWORD */   {CONT,       ERR,         ADD_TOKEN},
 /* NUMBER */    {ERR,        CONT,        ADD_TOKEN}
 };
@@ -34,11 +35,27 @@ void addToken(enum TokenType type) {
     memcpy(str, source + cur_start, cur_index - cur_start);
     str[cur_index] = '\0';
 
-    printf("string added: %s\n", str);
 
     token.lexeme = str;
     token.line = cur_line;
-    token.type = type; // need to map - state != type currently 
+    switch(state) {
+        case IN_IDENTIFIER:
+            for(int i = 0; i < number_of_keywords; i++) {
+                if(!strcmp(strupr(str), keywords[i])) {
+                    token.type = KEYWORD;
+                    break;
+                }
+                if(i + 1 == number_of_keywords)
+                    token.type = IDENTIFIER;
+            }
+            break;
+        case IN_NUMBER:
+            token.type = LITERAL;
+            break;
+    }
+    // token.type = type; // need to map - state != type currently 
+    printf("string added: %s\n", str);
+    printf("type: %d\n", token.type);
 
     // add token to tokens
     tokens[token_index] = token;
@@ -70,6 +87,8 @@ void scanToken() {
         else if(isalpha(c)) {
             ctype = LETTER;
         }
+        // else if(c == '*')
+
         // else if(isspace(c)) {
         else {
             ctype = WHITESPACE;
@@ -83,6 +102,8 @@ void scanToken() {
                 state = IN_NUMBER;
                 break;
             case CONT:
+                if(state == START) 
+                    cur_start++;
                 break;
             case ADD_TOKEN:
                 addToken(state);
