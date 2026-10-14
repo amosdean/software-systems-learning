@@ -12,8 +12,9 @@ typedef enum ParserAction {
     TO_SELECT
     ,TO_FROM
     ,TO_WHERE
-    ,CONT
-    ,ERR
+    ,PARSER_CONT
+    ,PARSER_ERR
+    ,PARSER_END
 } ParserAction;
 
 typedef struct TreeNode {

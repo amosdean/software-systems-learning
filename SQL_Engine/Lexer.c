@@ -24,38 +24,38 @@ int cur_line;
 
 // Tokens
 // int current_index;
-struct Token *tokens;
+Token *tokens[];
 int token_index = 0;
 int state;
 
 void addToken(enum TokenType type) {
-    struct Token token;
+    Token *token = calloc(1, sizeof(Token));
     char *str = calloc(100, sizeof(char)); 
 
     memcpy(str, source + cur_start, cur_index - cur_start);
     str[cur_index] = '\0';
 
 
-    token.lexeme = str;
-    token.line = cur_line;
+    token->lexeme = str;
+    token->line = cur_line;
     switch(state) {
         case IN_IDENTIFIER:
             for(int i = 0; i < number_of_keywords; i++) {
                 if(!strcmp(strupr(str), keywords[i])) {
-                    token.type = KEYWORD;
+                    token->type = KEYWORD;
                     break;
                 }
                 if(i + 1 == number_of_keywords)
-                    token.type = IDENTIFIER;
+                    token->type = IDENTIFIER;
             }
             break;
         case IN_NUMBER:
-            token.type = LITERAL;
+            token->type = LITERAL;
             break;
     }
     // token.type = type; // need to map - state != type currently 
     printf("string added: %s\n", str);
-    printf("type: %d\n", token.type);
+    printf("type: %d\n", token->type);
 
     // add token to tokens
     tokens[token_index] = token;
@@ -117,6 +117,7 @@ void scanToken() {
         c = advance();
         if(c == '\0') {
             eot = 1;
+            addToken(END_OF_FILE);
         }
     }
     // addToken(state);
@@ -135,10 +136,10 @@ void scanToken() {
     // }
 }
 
-struct Token * scanTokens(char *src, size_t size) {
+Token ** scanTokens(char *src, size_t size) {
     source = src;
 
-    tokens = calloc(100, sizeof(struct Token));
+    *tokens = calloc(100, sizeof(struct Token));
     cur_start = 0;
     cur_index = 0;
     cur_line = 1;

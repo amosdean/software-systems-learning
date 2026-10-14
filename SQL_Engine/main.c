@@ -34,7 +34,8 @@ int main(int argc, char* argv[]) {
 	char * buffer = readFile(argv[1], &len);
 	printf("%s", buffer);
 	// lexer
-	scanTokens(buffer, len);
+	Token *tokens[] = scanTokens(buffer, len);
+	for(int i = 0; i <)
 	// Parser
 	// Semantic
 	// Execute

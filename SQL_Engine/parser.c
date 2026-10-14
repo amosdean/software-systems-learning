@@ -2,10 +2,10 @@
 #include "parser.h"
 #include "lexer.h"
 const ParserAction TRANSITIONS[3][3] = {
-        //       SELECT      IDENTIFIER     FROM
-/* START */    {TO_SELECT,   ERR,           ERR},
-/* SELECT */   {ERR,         CONT,          TO_FROM},
-/* FROM */     {ERR,         CONT,           ERR}
+        //       SELECT      IDENTIFIER     FROM            EOF
+/* START */    {TO_SELECT,   PARSER_ERR,  PARSER_ERR,   PARSER_END},
+/* SELECT */   {PARSER_ERR,  PARSER_CONT, TO_FROM,      PARSER_END},
+/* FROM */     {PARSER_ERR,  PARSER_CONT, PARSER_ERR,   PARSER_END}
 };
 
 
@@ -57,11 +57,15 @@ void Parse(Token *token) {
             state = TO_WHERE;
             insertSibling(currentNode, token);
             break;
-        case CONT: 
+        case PARSER_CONT: 
             insertChild(currentNode, token);
             break;
-        case ERR: 
+        case PARSER_ERR: 
             printf("ERROR: Incorrect Syntax on line %d, token '%s'", token->line, token->lexeme);
+            break;
+        case PARSER_END:
+            printf("End of parsing\n");
+            eof = 1;
             break;
     }
 }

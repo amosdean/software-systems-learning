@@ -50,7 +50,7 @@ typedef struct Token {
 	char * lexeme;
     int line;
 } Token;
-struct Token * scanTokens(char *src, size_t size);
+Token ** scanTokens(char *src, size_t size);
 
 typedef enum Action {
     TO_NUMBER
