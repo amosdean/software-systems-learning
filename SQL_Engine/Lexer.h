@@ -45,11 +45,11 @@ enum lexerState {
     ,IN_NUMBER
 };
 
-struct Token {
+typedef struct Token {
 	enum TokenType type;
 	char * lexeme;
     int line;
-};
+} Token;
 struct Token * scanTokens(char *src, size_t size);
 
 typedef enum Action {

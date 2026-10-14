@@ -1,2 +1,2 @@
-CREATE TABLE myTable * 123;
-select * from myTable;
+select user from myTable;
+select user, userId from myTable;
