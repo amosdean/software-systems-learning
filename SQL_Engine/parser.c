@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include "parser.h"
 #include "lexer.h"
-const ParserAction TRANSITIONS[3][3] = {
-        //       SELECT      IDENTIFIER     FROM            EOF
-/* START */    {TO_SELECT,   PARSER_ERR,  PARSER_ERR,   PARSER_END},
-/* SELECT */   {PARSER_ERR,  PARSER_CONT, TO_FROM,      PARSER_END},
-/* FROM */     {PARSER_ERR,  PARSER_CONT, PARSER_ERR,   PARSER_END}
+const ParserAction TRANSITIONS[3][6] = {
+    //              SELECT       FROM           IDENTIFIER       NUMBER         SEMICOLON           EOF
+    /* START */  {TO_SELECT,    PARSER_ERR,     PARSER_ERR,     PARSER_ERR,     PARSER_ERR,     PARSER_END},
+    /* SELECT */ {PARSER_ERR,   TO_FROM,        PARSER_CONT,    PARSER_CONT,    PARSER_ERR,     PARSER_ERR},
+    /* FROM */   {PARSER_ERR,   PARSER_ERR,     PARSER_CONT,    PARSER_ERR,     PARSER_CONT,    PARSER_ERR}
 };
 
 
