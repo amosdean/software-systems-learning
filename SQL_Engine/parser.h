@@ -1,20 +1,27 @@
 #ifndef parser_H
 #define parser_H
+#include "lexer.h"
 
 typedef enum ParserState {
-    START
-    ,IN_SELECT
-    ,IN_FROM
-    ,IN_WHERE
+     PS_START
+    ,PS_TO_SELECT
+    ,PS_SELECT_COL
+    ,PS_TO_FROM
+    ,PS_FROM_TABLE
+    ,PS_TO_WHERE
+    ,PS_W_COND
 } ParserState;
 
 typedef enum ParserAction {
-    TO_SELECT
-    ,TO_FROM
-    ,TO_WHERE
-    ,PARSER_CONT
-    ,PARSER_ERR
-    ,PARSER_END
+    PA_TO_SELECT
+    ,PA_SEL_COL
+    ,PA_TO_FROM
+    ,PA_TO_WHERE
+    ,PA_CONT
+    ,PA_TO_START
+    ,PA_FROM_TBL
+    ,PA_ERR
+    ,PA_END
 } ParserAction;
 
 typedef struct TreeNode {
@@ -22,5 +29,7 @@ typedef struct TreeNode {
     struct TreeNode *firstChild;
     struct TreeNode *nextSiblingNode;
 } TreeNode;
+
+void parseTokens(Token **src_tokens, int *tokensSize); 
 
 #endif // parser_H

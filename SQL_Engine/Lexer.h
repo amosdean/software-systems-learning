@@ -10,7 +10,6 @@ typedef enum {
     TOK_EOF
 } TokenType;
 
-
 static const char *keywords[] = {
     "SELECT",
     "FROM",
@@ -19,13 +18,13 @@ static const char *keywords[] = {
     "INTO",
 };
 
-static const int number_of_keywords = 5;
-
+static const int NUMBER_OF_KEYWORDS = 5;
 
 enum lexerState {
-    START
-    ,IN_IDENTIFIER
-    ,IN_NUMBER
+    LEX_START
+    ,LEX_IN_IDENTIFIER
+    ,LEX_IN_NUMBER
+    ,LEX_IN_PUNCTUATION
 };
 
 typedef struct Token {
@@ -34,7 +33,7 @@ typedef struct Token {
     // Keyword keyword;
     int line;
 } Token;
-Token ** scanTokens(char *src, size_t size);
+Token ** scanTokens(char *src, size_t size, int *num_of_tokens);
 
 typedef enum Action {
     TO_NUMBER

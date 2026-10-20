@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "lexer.h"
+#include "parser.h"
 
 // enum TokenType {KEYWORD, IDENTIFIER, PUNCUATION, OPERATOR, CONSTANT, LITERAL};
 
@@ -30,13 +31,16 @@ int main(int argc, char* argv[]) {
 		printf("Invalid number of arguments");
 		return 1;
 	}
-	size_t len = 0;
-	char * buffer = readFile(argv[1], &len);
+	size_t file_str_len = 0;
+	char * buffer = readFile(argv[1], &file_str_len);
 	printf("%s", buffer);
 	// lexer
-	Token **tokens = scanTokens(buffer, len);
+	int *tokens_length = malloc(sizeof(int));
+	*tokens_length = 0;
+	Token **tokens = scanTokens(buffer, file_str_len, tokens_length);
 	// for(int i = 0; i <)
 	// Parser
+	parseTokens(tokens, tokens_length);
 	// Semantic
 	// Execute
 	
