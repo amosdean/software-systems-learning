@@ -1,0 +1,3 @@
+TABLE users
+column user_id INTEGER
+column user_name TEXT

@@ -12,7 +12,7 @@ else
 endif
 
 TARGET = main
-SOURCE = ./SQL_Engine/main.c ./SQL_Engine/lexer.c ./SQL_Engine/parser.c
+SOURCE = ./SQL_Engine/main.c ./SQL_Engine/lexer.c ./SQL_Engine/parser.c ./SQL_Engine/Schema.c
 OBJS = $(SOURCE:.c=.o)
 
 .PHONY: all run clean

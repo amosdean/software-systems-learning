@@ -1,9 +1,16 @@
 #ifndef lexer_H
 #define lexer_H
 
+// Token types and keywords must match order
 typedef enum {
     TOK_SELECT,
     TOK_FROM,
+    TOK_WHERE,
+    TOK_CREATE,
+    TOK_TABLE,
+    TOK_INSERT,
+    TOK_INTO,
+    TOK_VALUES,
     TOK_IDENTIFIER,
     TOK_NUMBER,
     TOK_SEMICOLON,
@@ -13,12 +20,15 @@ typedef enum {
 static const char *keywords[] = {
     "SELECT",
     "FROM",
-    "WHERE"
+    "WHERE",
+    "CREATE",
+    "TABLE",
     "INSERT",
     "INTO",
+    "VALUES"
 };
 
-static const int NUMBER_OF_KEYWORDS = 5;
+static const int NUMBER_OF_KEYWORDS = 8;
 
 enum lexerState {
     LEX_START

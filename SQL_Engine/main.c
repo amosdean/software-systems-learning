@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include "lexer.h"
 #include "parser.h"
-
-// enum TokenType {KEYWORD, IDENTIFIER, PUNCUATION, OPERATOR, CONSTANT, LITERAL};
+#include "schema.h"
 
 char * readFile(const char *file, size_t *out_len) {
 	FILE *fp = fopen(file, "rb");
@@ -41,8 +40,10 @@ int main(int argc, char* argv[]) {
 	// for(int i = 0; i <)
 	// Parser
 	parseTokens(tokens, tokens_length);
-	// Semantic
+	// Schema
+	schema();
 	// Execute
+		
 	
 	return 0;
 }

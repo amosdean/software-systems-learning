@@ -87,8 +87,8 @@ void addToken(TokenType type) {
             }
         }
     }
-    // printf("string added: \"%s\"\n", str); // Debugging
-    // printf("type: %d\n", token->type); // Debugging
+    printf("string added: \"%s\"\n", str); // Debugging
+    printf("type: %d\n", token->type); // Debugging
 
     // add token to tokens
     tokens[token_index++] = token;

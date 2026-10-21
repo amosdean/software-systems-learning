@@ -2,18 +2,9 @@
 #include <stdlib.h>
 #include "parser.h"
 #include "lexer.h"
-const ParserAction PARSER_TRANSITIONS[6][6] = {
-    //                          SELECT          FROM      IDENTIFIER   NUMBER     SEMICOLON      EOF
-    /* START */             {PA_TO_SELECT,     PA_ERR,     PA_ERR,     PA_ERR,     PA_ERR,     PA_END},
-    /* TO_SELECT */         {PA_ERR,           PA_ERR,     PA_SEL_COL, PA_ERR,     PA_ERR,     PA_ERR},
-    /* SELECT_COLUMNS */    {PA_ERR,           PA_TO_FROM, PA_CONT,    PA_CONT,    PA_ERR,     PA_ERR},
-    /* TO_FROM */           {PA_ERR,           PA_ERR,     PA_FROM_TBL,PA_ERR,     PA_ERR,     PA_ERR}, 
-    /* FROM_TABLE */        {PA_ERR,           PA_ERR,     PA_ERR,     PA_ERR,     PA_TO_START,PA_END},
-    /* TO_WHERE */          {PA_ERR,           PA_ERR,     PA_CONT,    PA_ERR,     PA_CONT,    PA_ERR}
-};
 
 
-static ParserState state;
+// static ParserState state;
 static int eof;
 static Token **tokens;
 static TreeNode *rootNode;
@@ -21,6 +12,48 @@ static TreeNode *currentNode;
 // TreeNode *nextNode;
 static int tokens_size;
 static int tokens_index;
+
+Token *peek() {
+    if (tokens_index < tokens_size) 
+        return tokens[tokens_index];
+    else 
+        return NULL; // No more tokens
+}
+
+void consume() {
+    if (tokens_index < tokens_size) 
+        tokens_index++;
+}
+
+int expect(TokenType expected) {
+    Token *token = peek();
+    if (token->type != expected) {
+        printf("Syntax Error: Expected token type %d but got %d on line %d, token '%s'\n", expected, token->type, token->line, token->lexeme);
+        return 0; // Error
+    }
+    consume();
+    return 1;
+}
+
+void parseTable(Token *token) {
+    insertSibling(currentNode, token);
+    token = tokens[tokens_index++];
+}
+
+void parseColumns(Token *token) {
+    while(token->type == TOK_IDENTIFIER || token->type == TOK_NUMBER) {
+        insertChild(currentNode, token);
+        token = tokens[tokens_index++];
+    }
+}
+
+void parseSelect(Token *token) {
+    rootNode = createTreeNode(token);
+    currentNode = rootNode;
+    token = tokens[tokens_index++];
+    parseColumns(token);
+    parseTable(token);
+}
 
 TreeNode * createTreeNode(Token *token) {
     TreeNode *node = calloc(1, sizeof(TreeNode));
@@ -47,54 +80,16 @@ void insertChild(TreeNode *node, Token *token) {
 //     return tokens[tokens_index];
 // }
 void parse(Token *token) {
-    ParserAction action = PARSER_TRANSITIONS[state][token->type];
-    switch(action) {
-        case PA_TO_SELECT:
-            state = PS_TO_SELECT;
-            rootNode = createTreeNode(token);
-            currentNode = rootNode;
-            break;
-        case PA_SEL_COL:
-            state = PS_SELECT_COL;
-            insertChild(currentNode, token);
-            break;
-        case PA_TO_FROM:
-            state = PS_TO_FROM;
-            insertSibling(currentNode, token);
-            break;
-        case PA_FROM_TBL:
-            state = PS_FROM_TABLE;
-            insertChild(currentNode, token);
-            break;
-        case PA_TO_START:
-            state = PS_START;
-            break;
-        case PA_TO_WHERE:
-            state = PS_W_COND;
-            insertSibling(currentNode, token);
-            break;
-        case PA_CONT: 
-            insertChild(currentNode, token);
-            break;
-        case PA_ERR: 
-            printf("ERROR: Incorrect Syntax on line %d, token '%s'\n", token->line, token->lexeme);
-            break;
-        case PA_END:
-            printf("End of parsing\n");
-            eof = 1;
-            break;
-    }
 }
 
 void parseTokens(Token **src_tokens, int *tokensSize) {
     tokens = src_tokens;
     tokens_size = *tokensSize;
     tokens_index = 0;
-    state = PS_START;
     eof = 0;
 
     while(!eof) {
         parse(tokens[tokens_index++]);
-        printf("parsed: %s\n", tokens[tokens_index-1]->lexeme);
+        printf("parsed: %s\n", tokens[tokens_index-1]->lexeme); // debugging
     }
 }
