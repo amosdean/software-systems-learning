@@ -24,12 +24,35 @@ typedef enum ParserAction {
     ,PA_END
 } ParserAction;
 
+typedef enum StatementType {
+    ST_SELECT
+    ,ST_CREATE
+    ,ST_INSERT
+} StatementType;
+
+typedef struct Statement {
+    TreeNode *rootNode;
+    StatementType type;
+    struct Statement *next;
+} Statement;
+
 typedef struct TreeNode {
     Token *token;
     struct TreeNode *firstChild;
     struct TreeNode *nextSiblingNode;
 } TreeNode;
 
-void parseTokens(Token **src_tokens, int *tokensSize); 
+typedef struct Parser {
+    // ParserState state;
+    int eot; // end of tokens
+    Token **tokens;
+    Token *current_token;
+    TreeNode *rootNode;
+    TreeNode *currentNode;
+    int tokens_size;
+    int tokens_index;
+} Parser;
+
+int parse(Token **src_tokens, int *tokensSize); 
 
 #endif // parser_H

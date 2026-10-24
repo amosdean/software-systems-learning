@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
 	Token **tokens = scanTokens(buffer, file_str_len, tokens_length);
 	// for(int i = 0; i <)
 	// Parser
-	parseTokens(tokens, tokens_length);
+	parse(tokens, tokens_length);
 	// Schema
 	schema();
 	// Execute

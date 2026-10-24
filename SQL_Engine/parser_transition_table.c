@@ -14,7 +14,7 @@ const ParserAction PARSER_TRANSITIONS[6][6] = {
 
 
 static ParserState state;
-static int eof;
+static int eot;
 static Token **tokens;
 static TreeNode *rootNode;
 static TreeNode *currentNode;
@@ -81,19 +81,19 @@ void parse(Token *token) {
             break;
         case PA_END:
             printf("End of parsing\n");
-            eof = 1;
+            eot = 1;
             break;
     }
 }
 
-void parseTokens(Token **src_tokens, int *tokensSize) {
+void parse(Token **src_tokens, int *tokensSize) {
     tokens = src_tokens;
     tokens_size = *tokensSize;
     tokens_index = 0;
     state = PS_START;
-    eof = 0;
+    eot = 0;
 
-    while(!eof) {
+    while(!eot) {
         parse(tokens[tokens_index++]);
         printf("parsed: %s\n", tokens[tokens_index-1]->lexeme); // debugging
     }

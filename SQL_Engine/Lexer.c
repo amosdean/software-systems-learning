@@ -77,6 +77,7 @@ void addToken(TokenType type) {
         str[lexeme_len] = '\0';
 
         token->lexeme = str;
+        printf("string added: \"%s\"\n", str); // Debugging
     }
     // Keyword check
     if(type == TOK_IDENTIFIER) { 
@@ -87,7 +88,6 @@ void addToken(TokenType type) {
             }
         }
     }
-    printf("string added: \"%s\"\n", str); // Debugging
     printf("type: %d\n", token->type); // Debugging
 
     // add token to tokens

@@ -5,56 +5,17 @@
 
 
 // static ParserState state;
-static int eof;
+static int eot; // end of tokens
 static Token **tokens;
 static TreeNode *rootNode;
 static TreeNode *currentNode;
 // TreeNode *nextNode;
 static int tokens_size;
 static int tokens_index;
+// Statement
+static Statement rootStatement;
 
-Token *peek() {
-    if (tokens_index < tokens_size) 
-        return tokens[tokens_index];
-    else 
-        return NULL; // No more tokens
-}
-
-void consume() {
-    if (tokens_index < tokens_size) 
-        tokens_index++;
-}
-
-int expect(TokenType expected) {
-    Token *token = peek();
-    if (token->type != expected) {
-        printf("Syntax Error: Expected token type %d but got %d on line %d, token '%s'\n", expected, token->type, token->line, token->lexeme);
-        return 0; // Error
-    }
-    consume();
-    return 1;
-}
-
-void parseTable(Token *token) {
-    insertSibling(currentNode, token);
-    token = tokens[tokens_index++];
-}
-
-void parseColumns(Token *token) {
-    while(token->type == TOK_IDENTIFIER || token->type == TOK_NUMBER) {
-        insertChild(currentNode, token);
-        token = tokens[tokens_index++];
-    }
-}
-
-void parseSelect(Token *token) {
-    rootNode = createTreeNode(token);
-    currentNode = rootNode;
-    token = tokens[tokens_index++];
-    parseColumns(token);
-    parseTable(token);
-}
-
+/* TreeNode functions */
 TreeNode * createTreeNode(Token *token) {
     TreeNode *node = calloc(1, sizeof(TreeNode));
     node->token = token;
@@ -75,21 +36,150 @@ void insertChild(TreeNode *node, Token *token) {
     TreeNode *nextNode = createTreeNode(token);
     node->firstChild = nextNode;
 }
-// char advance() {
-//     tokens_index++;
-//     return tokens[tokens_index];
-// }
-void parse(Token *token) {
+
+
+/* Token navigation functions */
+static Token *peek(Parser *parser) {
+    return parser->current_token;
 }
 
-void parseTokens(Token **src_tokens, int *tokensSize) {
-    tokens = src_tokens;
-    tokens_size = *tokensSize;
-    tokens_index = 0;
-    eof = 0;
-
-    while(!eof) {
-        parse(tokens[tokens_index++]);
-        printf("parsed: %s\n", tokens[tokens_index-1]->lexeme); // debugging
+static Token *pop(Parser *parser) {
+    Token *token = parser->current_token;
+    if (!token) {
+        parser->eot = 1;
+        return NULL;
     }
+
+    parser->tokens_index++;
+    parser->current_token =
+        parser->tokens_index < parser->tokens_size
+            ? parser->tokens[parser->tokens_index]
+            : NULL;
+
+    if (!parser->current_token) parser->eot = 1;
+    printf("Popped token: type=%d, lexeme='%s', line=%d\n", token->type, token->lexeme, token->line); // Debugging
+    return token;
+}
+
+static int expect(Parser *parser, TokenType expected) {
+    Token *token = peek(parser);
+    if (!token || token->type != expected) {
+        if (token)
+            printf("Syntax Error: Expected token type %d but got %d on line %d, token '%s'\n",
+                   expected, token->type, token->line, token->lexeme);
+        else
+            printf("Syntax Error: Expected token type %d but reached end of input\n",
+                   expected);
+        return 0;
+    }
+
+    return 1;
+}
+
+/* Parsing functions */
+static int parseSemicolon(Parser *parser) {
+    if (expect(parser, TOK_SEMICOLON) == 0) return 0;
+    pop(parser); // Consume the semicolon.
+    parser->eot = 1; // Mark end of tokens after semicolon.
+    return 1;
+}
+
+
+static int parseColumns(Parser *parser) {
+    Token *token = peek(parser);
+
+    while (token &&
+           (token->type == TOK_IDENTIFIER || token->type == TOK_NUMBER)) {
+        insertChild(currentNode, token);
+        pop(parser);
+        token = peek(parser);
+    }
+
+    return token != NULL;
+}
+
+static int parseFrom(Parser *parser) {
+    Token *from_token = peek(parser);
+
+    // parse FROM keyword
+    if (!expect(parser, TOK_FROM))
+        return 0;
+    insertSibling(currentNode, from_token); // keywords are siblings of the root node
+
+    // parse table name
+    if (!expect(parser, TOK_IDENTIFIER)) return 0; 
+    insertChild(currentNode, pop(parser));// child of the keyword node
+    return 1;
+}
+
+static int parseSelect(Parser *parser) {
+    Token *select_token = pop(parser);
+
+    rootNode = createTreeNode(select_token);
+    if (!rootNode) return 0;
+    currentNode = rootNode;
+
+    pop(parser); // Consume SELECT.
+
+    return (!parseColumns(parser) ||
+        !parseFrom(parser) ||
+        !parseSemicolon(parser)) 
+        ? 0 : 1;
+}
+
+static int addStatement(Parser *parser, StatementType type) {
+    Statement *stmt = malloc(sizeof *stmt);
+    if (!stmt)
+        return 0;
+
+    stmt->rootNode = parser->rootNode;
+    stmt->type = type;
+    stmt->next = NULL;
+
+    // append to statements linked list 
+    if (!rootStatement.rootNode) {
+        rootStatement = *stmt;
+    } else {
+        Statement *current = &rootStatement;
+        while (current->next)
+            current = current->next;
+        current->next = stmt;
+    }
+    return 1;
+}
+
+static int parseStatement(Parser *parser) {
+    Token *start_token = peek(parser);
+    if (!start_token)
+        return 0;
+
+    switch (start_token->type) {
+        case TOK_SELECT:
+            if (!parseSelect(parser))
+                return 0;
+            if (!addStatement(start_token, ST_SELECT))
+                return 0;
+            return 1;
+
+        default:
+            printf("Syntax Error: Unexpected token '%s' on line %d\n",
+                   start_token->lexeme, start_token->line);
+            return 0;
+    }
+}
+
+int parse(Token **src_tokens, int *tokensSize) {
+    if (!src_tokens || !tokensSize || *tokensSize <= 0)
+        return 0;
+
+    Parser parser = {0};
+    parser.tokens = src_tokens;
+    parser.tokens_size = *tokensSize;
+    parser.current_token = src_tokens[0];
+
+    while (parser.current_token && !parser.eot) {
+        if (!parseStatement(&parser))
+            break;
+    }
+    return 1;
 }
