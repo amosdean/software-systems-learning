@@ -52,6 +52,7 @@ TokenType getPunctuationTokenType(char c) {
         case ';':
             return TOK_SEMICOLON;
     }
+    return TOK_EOF; 
 }
 
 void addToken(TokenType type) {

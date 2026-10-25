@@ -30,24 +30,26 @@ typedef enum StatementType {
     ,ST_INSERT
 } StatementType;
 
-typedef struct Statement {
-    TreeNode *rootNode;
-    StatementType type;
-    struct Statement *next;
-} Statement;
-
 typedef struct TreeNode {
     Token *token;
     struct TreeNode *firstChild;
     struct TreeNode *nextSiblingNode;
 } TreeNode;
 
+typedef struct Statement {
+    TreeNode *rootNode;
+    StatementType type;
+    struct Statement *next;
+} Statement;
+
 typedef struct Parser {
     // ParserState state;
     int eot; // end of tokens
+    int eos; // end of statements
     Token **tokens;
     Token *current_token;
-    TreeNode *rootNode;
+    Statement *rootStatement;
+    Statement *currentStatement;
     TreeNode *currentNode;
     int tokens_size;
     int tokens_index;

@@ -5,38 +5,15 @@
 
 
 // static ParserState state;
-static int eot; // end of tokens
-static Token **tokens;
-static TreeNode *rootNode;
-static TreeNode *currentNode;
+// static int eot; // end of tokens
+// static Token **tokens;
+// static TreeNode *rootNode;
+// static TreeNode *currentNode;
 // TreeNode *nextNode;
-static int tokens_size;
-static int tokens_index;
+// static int tokens_size;
+// static int tokens_index;
 // Statement
 static Statement rootStatement;
-
-/* TreeNode functions */
-TreeNode * createTreeNode(Token *token) {
-    TreeNode *node = calloc(1, sizeof(TreeNode));
-    node->token = token;
-    node->firstChild = NULL;
-    node->nextSiblingNode = NULL;
-    return node;
-}
-
-void insertSibling(TreeNode *node, Token * token) {
-    TreeNode *nextNode = createTreeNode(token);
-    node->nextSiblingNode = nextNode;
-    currentNode = nextNode;
-}
-
-void insertChild(TreeNode *node, Token *token) {
-    while(node->firstChild != NULL)
-        node = node->firstChild;
-    TreeNode *nextNode = createTreeNode(token);
-    node->firstChild = nextNode;
-}
-
 
 /* Token navigation functions */
 static Token *peek(Parser *parser) {
@@ -76,6 +53,29 @@ static int expect(Parser *parser, TokenType expected) {
     return 1;
 }
 
+
+/* TreeNode functions */
+TreeNode * createTreeNode(Token *token) {
+    TreeNode *node = calloc(1, sizeof(TreeNode));
+    node->token = token;
+    node->firstChild = NULL;
+    node->nextSiblingNode = NULL;
+    return node;
+}
+
+void insertSibling(Parser *parser) {
+    TreeNode *nextNode = createTreeNode(pop(parser));
+    parser->currentNode->nextSiblingNode = nextNode;
+    parser->currentNode = nextNode;
+}
+
+void insertChild(Parser *parser) {
+    while(parser->currentNode->firstChild != NULL)
+        parser->currentNode = parser->currentNode->firstChild;
+    TreeNode *nextNode = createTreeNode(pop(parser));
+    parser->currentNode->firstChild = nextNode;
+}
+
 /* Parsing functions */
 static int parseSemicolon(Parser *parser) {
     if (expect(parser, TOK_SEMICOLON) == 0) return 0;
@@ -84,13 +84,12 @@ static int parseSemicolon(Parser *parser) {
     return 1;
 }
 
-
 static int parseColumns(Parser *parser) {
     Token *token = peek(parser);
 
     while (token &&
            (token->type == TOK_IDENTIFIER || token->type == TOK_NUMBER)) {
-        insertChild(currentNode, token);
+        insertChild(parser);
         pop(parser);
         token = peek(parser);
     }
@@ -104,22 +103,22 @@ static int parseFrom(Parser *parser) {
     // parse FROM keyword
     if (!expect(parser, TOK_FROM))
         return 0;
-    insertSibling(currentNode, from_token); // keywords are siblings of the root node
+    insertSibling(parser); // keywords are siblings of the root node
 
     // parse table name
     if (!expect(parser, TOK_IDENTIFIER)) return 0; 
-    insertChild(currentNode, pop(parser));// child of the keyword node
+    insertChild(parser);// child of the keyword node
     return 1;
 }
 
 static int parseSelect(Parser *parser) {
     Token *select_token = pop(parser);
 
-    rootNode = createTreeNode(select_token);
-    if (!rootNode) return 0;
-    currentNode = rootNode;
+    parser->currentStatement->rootNode = createTreeNode(select_token);
+    if (!parser->currentStatement->rootNode) return 0;
+    parser->currentNode = parser->currentStatement->rootNode;
 
-    pop(parser); // Consume SELECT.
+    // pop(parser); // Consume SELECT.
 
     return (!parseColumns(parser) ||
         !parseFrom(parser) ||
@@ -132,15 +131,15 @@ static int addStatement(Parser *parser, StatementType type) {
     if (!stmt)
         return 0;
 
-    stmt->rootNode = parser->rootNode;
+    stmt->rootNode = parser->currentStatement->rootNode;
     stmt->type = type;
     stmt->next = NULL;
 
     // append to statements linked list 
-    if (!rootStatement.rootNode) {
-        rootStatement = *stmt;
+    if (!parser->rootStatement) {
+        parser->rootStatement = stmt;
     } else {
-        Statement *current = &rootStatement;
+        Statement *current = parser->rootStatement;
         while (current->next)
             current = current->next;
         current->next = stmt;
@@ -150,14 +149,16 @@ static int addStatement(Parser *parser, StatementType type) {
 
 static int parseStatement(Parser *parser) {
     Token *start_token = peek(parser);
-    if (!start_token)
-        return 0;
+    if (!start_token) return 0;
+    Statement *stmt = malloc(sizeof *stmt);
+    if (!stmt) return 0;
+    parser->currentStatement = stmt;
 
     switch (start_token->type) {
         case TOK_SELECT:
             if (!parseSelect(parser))
                 return 0;
-            if (!addStatement(start_token, ST_SELECT))
+            if (!addStatement(parser, ST_SELECT))
                 return 0;
             return 1;
 
