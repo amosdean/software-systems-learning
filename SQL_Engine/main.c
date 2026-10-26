@@ -40,8 +40,9 @@ int main(int argc, char* argv[]) {
 	// for(int i = 0; i <)
 	// Parser
 	parse(tokens, tokens_length);
+	printf("Parsing completed.\n");
 	// Schema
-	schema();
+	// schema();
 	// Execute
 		
 	

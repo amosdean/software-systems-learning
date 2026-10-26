@@ -9,7 +9,7 @@
 const Action LEXER_TRANSITIONS[4][4] = {
         //          LETTER    NUMBER     WHITESPACE     SEMICOLON
 /* START */     {TO_WORD,    TO_NUMBER,   CONT,         ADD_TOKEN},
-/* KEYWORD */   {CONT,       ERR,         ADD_TOKEN,    ADD_TOKEN},
+/* ID */        {CONT,       ERR,         ADD_TOKEN,    ADD_TOKEN},
 /* NUMBER */    {ERR,        CONT,        ADD_TOKEN,    ADD_TOKEN},
 /* PUNCT */     {ADD_TOKEN,  ADD_TOKEN,   ADD_TOKEN,    ADD_TOKEN}
 };
@@ -30,12 +30,7 @@ static int token_index;
 static int state;
 
 CType getTokenType(char c) {
-    if(c == 'v' || c == 'V') 
-        printf("V detected\n");
-    if(c == '\n')
-        return WHITESPACE;
-    else
-    if(isalpha(c)) return LETTER;
+    if(isalpha(c) || c == '\'' || c == '"') return LETTER;
     else if(isdigit(c)) return NUMBER;
     else if(ispunct(c)) return PUNCTUATION;
     else if(isspace(c) || c == '\n') return WHITESPACE;
@@ -49,7 +44,6 @@ TokenType getPunctuationTokenType(char c) {
         default:
             return TOK_OTHER;
     }
-    return TOK_EOF; 
 }
 
 void addToken(TokenType type) {

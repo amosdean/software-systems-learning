@@ -4,18 +4,6 @@
 #include "parser.h"
 #include "lexer.h"
 
-
-// static ParserState state;
-// static int eot; // end of tokens
-// static Token **tokens;
-// static TreeNode *rootNode;
-// static TreeNode *currentNode;
-// TreeNode *nextNode;
-// static int tokens_size;
-// static int tokens_index;
-// Statement
-static Statement rootStatement;
-
 /* Token navigation functions */
 static Token *peek(Parser *parser) {
     return parser->current_token;
@@ -51,6 +39,16 @@ static int expect(Parser *parser, TokenType expected) {
         return 0;
     }
 
+    return 1;
+}
+
+static int expectPunctuation(Parser *parser, const char *expected) {
+    Token *token = peek(parser);
+    if (!token || token->type != TOK_OTHER || strcmp(token->lexeme, expected) != 0) {
+        // printf("Syntax Error: Expected punctuation '%s' but got '%s' on line %d\n",
+        //           expected, token->lexeme, token->line);
+        return 0;
+    }
     return 1;
 }
 
@@ -126,7 +124,6 @@ static int parseSelect(Parser *parser) {
         ? 0 : 1;
 }
 
-
 static int createTable(Parser *parser) {
     Token *create_token = pop(parser);
 
@@ -138,31 +135,109 @@ static int createTable(Parser *parser) {
     pop(parser); // Consume TABLE keyword
     insertChild(parser); // Add table name as child of CREATE
     pop(parser); // Consume table name
+
     Token *token = peek(parser);
-    if (token && token->lexeme && strcmp(token->lexeme, "(") == 0) {
-        pop(parser); // Consume '('
-        insertChild(parser); // Add '(' as child of CREATE
-        while (token && strcmp(token->lexeme, ")") != 0) {
-            if (!expect(parser, TOK_IDENTIFIER)) return 0; // Expect column name
-            insertChild(parser); // Add column name as child of CREATE
-            pop(parser); // Consume column name
+    if (!expectPunctuation(parser, "(")) {
+          printf("Syntax Error: Expected '(' after table name on line %d\n", token->line);
+        return 0; 
+    }
+    insertChild(parser); // Add '(' as child of CREATE
+    pop(parser); // Consume '('
+    while (token && strcmp(token->lexeme, ")") != 0) {
+        if (!expect(parser, TOK_IDENTIFIER)) return 0; // Expect column name
+        insertChild(parser); // Add column name as child of CREATE
+        pop(parser); // Consume column name
+        token = peek(parser);
+        if (!expect(parser, TOK_DATATYPE)) return 0; // Expect datatype
+        insertChild(parser); // Add datatype as child of CREATE
+        pop(parser); // Consume datatype
+        token = peek(parser);
+        if (token && token->lexeme && strcmp(token->lexeme, ",") == 0) {
+            pop(parser); // Consume ','
+            // insertSibling(parser); // Add ',' as sibling of last column
+        }
+        token = peek(parser);
+        }
+    if (!expect(parser, TOK_OTHER)) return 0; // Expect ')'
+    pop(parser); // Consume ')'
+    // Expect semicolon
+    if (!expect(parser, TOK_SEMICOLON)) return 0;
+    pop(parser); // Consume semicolon
+}
+
+static int parseInsert(Parser *parser) {
+    Token *insert_token = pop(parser);
+
+    // Set up root node
+    parser->currentStatement->rootNode = createTreeNode(insert_token);
+    if (!parser->currentStatement->rootNode) return 0;
+    parser->currentNode = parser->currentStatement->rootNode;
+
+    // parse INTO keyword
+    if (!expect(parser, TOK_INTO)) return 0;
+    insertSibling(parser); // Add INTO as sibling of INSERT
+    // pop(parser); // Consume INTO
+
+    // parse table name
+    if (!expect(parser, TOK_IDENTIFIER)) return 0;
+    insertChild(parser); // Add table name as child of INSERT
+    pop(parser); // Consume table name
+
+    // Expect '('
+    Token *token = peek(parser);
+    // if (token && token->type == TOK_OTHER && strcmp(token->lexeme, "(") == 0) {
+    if(!expectPunctuation(parser, "(")) {
+        printf("Syntax Error: Expected '(' after table name on line %d\n", token->line);
+        return 0;
+    }
+    insertChild(parser); // Add '(' as child of INSERT
+    pop(parser); // Consume '('
+    while (!expectPunctuation(parser, ")")) {
+        if (!expect(parser, TOK_IDENTIFIER)) return 0; // Expect column name
+        insertChild(parser); // Add column name as child of INSERT
+        pop(parser); // Consume column name
             token = peek(parser);
-            if (!expect(parser, TOK_DATATYPE)) return 0; // Expect datatype
-            insertChild(parser); // Add datatype as child of CREATE
-            pop(parser); // Consume datatype
-            token = peek(parser);
-            if (token && token->lexeme && strcmp(token->lexeme, ",") == 0) {
+            if (expectPunctuation(parser, ",")) { // commas optional currently
                 pop(parser); // Consume ','
                 // insertSibling(parser); // Add ',' as sibling of last column
             }
             token = peek(parser);
         }
-        if (!expect(parser, TOK_OTHER)) return 0; // Expect ')'
-        pop(parser); // Consume ')'
-    } else {
-        printf("Syntax Error: Expected '(' after table name on line %d\n", token->line);
+    pop(parser); // Consume ')'
+
+     // Expect VALUES keyword
+    if (!expect(parser, TOK_VALUES)) return 0;
+    insertSibling(parser); // Add VALUES as sibling of INSERT
+    // pop(parser); // Consume VALUES
+
+    // if (token && token->type == TOK_OTHER && strcmp(token->lexeme, "(") == 0) {
+    if(!expectPunctuation(parser, "(")) {
+        printf("Syntax Error: Expected '(' after VALUES on line %d\n", token->line);
         return 0;
     }
+    pop(parser); // Consume '('
+    // insertChild(parser); // Add '(' as child of VALUES
+    while (!expectPunctuation(parser, ")")) {
+        // if (!expect(parser, TOK_IDENTIFIER) && !expect(parser, TOK_NUMBER)) return 0; // Expect value
+        if (parser->current_token->type != TOK_IDENTIFIER && parser->current_token->type != TOK_NUMBER) {
+            printf("Syntax Error: Expected value (identifier or number) on line %d\n", token->line);
+            return 0;
+        }
+        insertChild(parser); // Add value as child of VALUES
+        pop(parser); // Consume value
+        token = peek(parser);
+        if (expectPunctuation(parser, ",")) { // commas optional currently
+            pop(parser); // Consume ','
+            // insertSibling(parser); // Add ',' as sibling of last value
+        }
+        token = peek(parser);
+    }
+    // if (!expect(parser, TOK_OTHER)) return 0; // Expect ')'
+    pop(parser); // Consume ')'
+   
+    // Expect semicolon
+    if (!expect(parser, TOK_SEMICOLON)) return 0;
+    pop(parser); // Consume semicolon
 }
 
 static int addStatement(Parser *parser, StatementType type) {
@@ -203,6 +278,12 @@ static int parseStatement(Parser *parser) {
             if (!createTable(parser)) return 0;
             if (!addStatement(parser, ST_CREATE)) return 0;
             return 1; 
+        case TOK_INSERT:
+            if (!parseInsert(parser)) return 0;
+            if (!addStatement(parser, ST_INSERT)) return 0;
+            return 1;
+        case TOK_EOF:
+            return 0; // End of tokens, no more statements to parse
         default:
             printf("Syntax Error: Unexpected token '%s' on line %d\n",
                    start_token->lexeme, start_token->line);
