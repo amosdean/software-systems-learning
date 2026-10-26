@@ -163,6 +163,7 @@ static int createTable(Parser *parser) {
     // Expect semicolon
     if (!expect(parser, TOK_SEMICOLON)) return 0;
     pop(parser); // Consume semicolon
+        return 1;
 }
 
 static int parseInsert(Parser *parser) {
@@ -236,6 +237,7 @@ static int parseInsert(Parser *parser) {
     // Expect semicolon
     if (!expect(parser, TOK_SEMICOLON)) return 0;
     pop(parser); // Consume semicolon
+    return 1;
 }
 
 static int addStatement(Parser *parser, StatementType type) {

@@ -60,8 +60,6 @@ void addToken(TokenType type) {
         // Important for self terminating tokens like punctuation
         int cur_end = (cur_index != cur_start) ? cur_index : cur_index + 1; 
         size_t lexeme_len = (size_t)(cur_end - cur_start);
-        const char *text;
-        text = source + cur_start;
         lexeme_len = (size_t)(cur_end - cur_start);
         str = malloc(lexeme_len + 1);
 
