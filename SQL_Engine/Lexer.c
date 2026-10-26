@@ -30,27 +30,24 @@ static int token_index;
 static int state;
 
 CType getTokenType(char c) {
-    if(isalpha(c)) {
-        return LETTER;
-    }
-    else if(isdigit(c)) {
-        return NUMBER;
-    }
-    else if(ispunct(c)) {
-        return PUNCTUATION;
-    }
-    else if(isspace(c)) {
+    if(c == 'v' || c == 'V') 
+        printf("V detected\n");
+    if(c == '\n')
         return WHITESPACE;
-    }
-    else {
-        return EOF;
-    }
+    else
+    if(isalpha(c)) return LETTER;
+    else if(isdigit(c)) return NUMBER;
+    else if(ispunct(c)) return PUNCTUATION;
+    else if(isspace(c) || c == '\n') return WHITESPACE;
+    else return EOF;
 }
 
 TokenType getPunctuationTokenType(char c) {
     switch(c) {
         case ';':
             return TOK_SEMICOLON;
+        default:
+            return TOK_OTHER;
     }
     return TOK_EOF; 
 }
@@ -80,11 +77,16 @@ void addToken(TokenType type) {
         token->lexeme = str;
         printf("string added: \"%s\"\n", str); // Debugging
     }
-    // Keyword check
+    // Keyword/datatype check
     if(type == TOK_IDENTIFIER) { 
+        // keywords
         for(int i = 0; i < NUMBER_OF_KEYWORDS; i++) {
-            if(!strcmp(strupr(str), keywords[i])) {
+            if(!strcmp(strupr(str), KEYWORDS[i])) {
                 token->type = i; 
+                break;
+            }
+            if(i < NUMBER_OF_DATATYPES && !strcmp(strupr(str), DATATYPES[i])) {
+                token->type = TOK_DATATYPE; 
                 break;
             }
         }
@@ -98,7 +100,7 @@ void addToken(TokenType type) {
 char advance() {
     cur_index++;
     if(source[cur_index] == '\n') {
-        cur_index++;
+        // cur_index++;
         cur_line++;
         if(cur_index == source_length)
             return '\0';

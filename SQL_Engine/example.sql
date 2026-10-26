@@ -1,5 +1,5 @@
 select user from myTable;
 CREATE TABLE myTable (
-    id INTEGER,
-    user TEXT
+    id INT,
+    user VARCHAR
 );

@@ -14,10 +14,12 @@ typedef enum {
     TOK_IDENTIFIER,
     TOK_NUMBER,
     TOK_SEMICOLON,
+    TOK_DATATYPE,
+    TOK_OTHER,
     TOK_EOF
 } TokenType;
 
-static const char *keywords[] = {
+static const char *KEYWORDS[] = {
     "SELECT",
     "FROM",
     "WHERE",
@@ -28,7 +30,16 @@ static const char *keywords[] = {
     "VALUES"
 };
 
+static const char *DATATYPES[] = {
+    "INT",
+    "VARCHAR",
+    "CHAR",
+    "FLOAT",
+    "DOUBLE"
+};
+
 static const int NUMBER_OF_KEYWORDS = 8;
+static const int NUMBER_OF_DATATYPES = 5;
 
 enum lexerState {
     LEX_START
@@ -41,6 +52,7 @@ typedef struct Token {
 	TokenType type;
 	char * lexeme;
     // Keyword keyword;
+    // DataType datatype;
     int line;
 } Token;
 Token ** scanTokens(char *src, size_t size, int *num_of_tokens);

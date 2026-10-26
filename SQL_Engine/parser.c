@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "parser.h"
 #include "lexer.h"
 
@@ -53,7 +54,6 @@ static int expect(Parser *parser, TokenType expected) {
     return 1;
 }
 
-
 /* TreeNode functions */
 TreeNode * createTreeNode(Token *token) {
     TreeNode *node = calloc(1, sizeof(TreeNode));
@@ -72,7 +72,7 @@ void insertSibling(Parser *parser) {
 void insertChild(Parser *parser) {
     while(parser->currentNode->firstChild != NULL)
         parser->currentNode = parser->currentNode->firstChild;
-    TreeNode *nextNode = createTreeNode(pop(parser));
+    TreeNode *nextNode = createTreeNode(peek(parser));
     parser->currentNode->firstChild = nextNode;
 }
 
@@ -80,7 +80,7 @@ void insertChild(Parser *parser) {
 static int parseSemicolon(Parser *parser) {
     if (expect(parser, TOK_SEMICOLON) == 0) return 0;
     pop(parser); // Consume the semicolon.
-    parser->eot = 1; // Mark end of tokens after semicolon.
+    parser->eos = 1; // Mark end of statement after semicolon.
     return 1;
 }
 
@@ -98,16 +98,16 @@ static int parseColumns(Parser *parser) {
 }
 
 static int parseFrom(Parser *parser) {
-    Token *from_token = peek(parser);
+    // Token *from_token = peek(parser);
 
     // parse FROM keyword
-    if (!expect(parser, TOK_FROM))
-        return 0;
+    if (!expect(parser, TOK_FROM)) return 0;
     insertSibling(parser); // keywords are siblings of the root node
 
     // parse table name
     if (!expect(parser, TOK_IDENTIFIER)) return 0; 
     insertChild(parser);// child of the keyword node
+    pop(parser); // Consume the table name.
     return 1;
 }
 
@@ -124,6 +124,45 @@ static int parseSelect(Parser *parser) {
         !parseFrom(parser) ||
         !parseSemicolon(parser)) 
         ? 0 : 1;
+}
+
+
+static int createTable(Parser *parser) {
+    Token *create_token = pop(parser);
+
+    parser->currentStatement->rootNode = createTreeNode(create_token);
+    if (!parser->currentStatement->rootNode) return 0;
+    parser->currentNode = parser->currentStatement->rootNode;
+
+    if (!expect(parser, TOK_TABLE)) return 0; // Expect table name
+    pop(parser); // Consume TABLE keyword
+    insertChild(parser); // Add table name as child of CREATE
+    pop(parser); // Consume table name
+    Token *token = peek(parser);
+    if (token && token->lexeme && strcmp(token->lexeme, "(") == 0) {
+        pop(parser); // Consume '('
+        insertChild(parser); // Add '(' as child of CREATE
+        while (token && strcmp(token->lexeme, ")") != 0) {
+            if (!expect(parser, TOK_IDENTIFIER)) return 0; // Expect column name
+            insertChild(parser); // Add column name as child of CREATE
+            pop(parser); // Consume column name
+            token = peek(parser);
+            if (!expect(parser, TOK_DATATYPE)) return 0; // Expect datatype
+            insertChild(parser); // Add datatype as child of CREATE
+            pop(parser); // Consume datatype
+            token = peek(parser);
+            if (token && token->lexeme && strcmp(token->lexeme, ",") == 0) {
+                pop(parser); // Consume ','
+                // insertSibling(parser); // Add ',' as sibling of last column
+            }
+            token = peek(parser);
+        }
+        if (!expect(parser, TOK_OTHER)) return 0; // Expect ')'
+        pop(parser); // Consume ')'
+    } else {
+        printf("Syntax Error: Expected '(' after table name on line %d\n", token->line);
+        return 0;
+    }
 }
 
 static int addStatement(Parser *parser, StatementType type) {
@@ -156,12 +195,14 @@ static int parseStatement(Parser *parser) {
 
     switch (start_token->type) {
         case TOK_SELECT:
-            if (!parseSelect(parser))
-                return 0;
-            if (!addStatement(parser, ST_SELECT))
-                return 0;
+            if (!parseSelect(parser)) return 0;
+            if (!addStatement(parser, ST_SELECT)) return 0;
             return 1;
-
+        case TOK_CREATE:
+            // Implement parseCreate function
+            if (!createTable(parser)) return 0;
+            if (!addStatement(parser, ST_CREATE)) return 0;
+            return 1; 
         default:
             printf("Syntax Error: Unexpected token '%s' on line %d\n",
                    start_token->lexeme, start_token->line);
@@ -170,8 +211,7 @@ static int parseStatement(Parser *parser) {
 }
 
 int parse(Token **src_tokens, int *tokensSize) {
-    if (!src_tokens || !tokensSize || *tokensSize <= 0)
-        return 0;
+    if (!src_tokens || !tokensSize || *tokensSize <= 0) return 0;
 
     Parser parser = {0};
     parser.tokens = src_tokens;
