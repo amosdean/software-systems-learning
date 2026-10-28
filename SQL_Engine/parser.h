@@ -55,6 +55,6 @@ typedef struct Parser {
     int tokens_index;
 } Parser;
 
-int parse(Token **src_tokens, int *tokensSize); 
+Parser parse(Token **src_tokens, int *tokensSize); 
 
 #endif // parser_H

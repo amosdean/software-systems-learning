@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "parser.h"
 #include "schema.h"
+#include "execute.h"
 
 char * readFile(const char *file, size_t *out_len) {
 	FILE *fp = fopen(file, "rb");

@@ -1,6 +1,6 @@
+#include <stddef.h>
 #ifndef lexer_H
 #define lexer_H
-
 // Token types and keywords must match order
 typedef enum {
     TOK_SELECT,

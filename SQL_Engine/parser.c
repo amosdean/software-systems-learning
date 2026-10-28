@@ -291,7 +291,7 @@ static int parseStatement(Parser *parser) {
     }
 }
 
-int parse(Token **src_tokens, int *tokensSize) {
+Parse *parse(Token **src_tokens, int *tokensSize) {
     if (!src_tokens || !tokensSize || *tokensSize <= 0) return 0;
 
     Parser parser = {0};
@@ -303,5 +303,5 @@ int parse(Token **src_tokens, int *tokensSize) {
         if (!parseStatement(&parser))
             break;
     }
-    return 1;
+    return parser;
 }
