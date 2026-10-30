@@ -6,23 +6,23 @@
 
 /* Token navigation functions */
 static Token *peek(Parser *parser) {
-    return parser->current_token;
+    return parser->currentToken;
 }
 
 static Token *pop(Parser *parser) {
-    Token *token = parser->current_token;
+    Token *token = parser->currentToken;
     if (!token) {
         parser->eot = 1;
         return NULL;
     }
 
-    parser->tokens_index++;
-    parser->current_token =
-        parser->tokens_index < parser->tokens_size
-            ? parser->tokens[parser->tokens_index]
+    parser->tokensIndex++;
+    parser->currentToken =
+        parser->tokensIndex < parser->tokensSize
+            ? parser->tokens[parser->tokensIndex]
             : NULL;
 
-    if (!parser->current_token) parser->eot = 1;
+    if (!parser->currentToken) parser->eot = 1;
     printf("Popped token: type=%d, lexeme='%s', line=%d\n", token->type, token->lexeme, token->line); // Debugging
     return token;
 }
@@ -186,7 +186,7 @@ static int parseInsert(Parser *parser) {
 
     // Expect '(' for column list
     if(!expectPunctuation(parser, "(")) {
-        printf("Syntax Error: Expected '(' after table name on line %d\n", parser->current_token->line);
+        printf("Syntax Error: Expected '(' after table name on line %d\n", parser->currentToken->line);
         return 0;
     }
     insertChild(parser); // Add '(' as child of INSERT
@@ -208,7 +208,7 @@ static int parseInsert(Parser *parser) {
 
     // if (token && token->type == TOK_OTHER && strcmp(token->lexeme, "(") == 0) {
     if(!expectPunctuation(parser, "(")) {
-        printf("Syntax Error: Expected '(' after VALUES on line %d\n", parser->current_token->line);
+        printf("Syntax Error: Expected '(' after VALUES on line %d\n", parser->currentToken->line);
         return 0;
     }
 
@@ -218,8 +218,8 @@ static int parseInsert(Parser *parser) {
         // insertChild(parser); // Add '(' as child of VALUES
         while (!expectPunctuation(parser, ")")) {
             // if (!expect(parser, TOK_IDENTIFIER) && !expect(parser, TOK_NUMBER)) return 0; // Expect value
-            if (parser->current_token->type != TOK_IDENTIFIER && parser->current_token->type != TOK_NUMBER) {
-                printf("Syntax Error: Expected value (identifier or number) on line %d\n", parser->current_token->line);
+            if (parser->currentToken->type != TOK_IDENTIFIER && parser->currentToken->type != TOK_NUMBER) {
+                printf("Syntax Error: Expected value (identifier or number) on line %d\n", parser->currentToken->line);
                 return 0;
             }
             insertChild(parser); // Add value as child of VALUES
@@ -241,32 +241,27 @@ static int parseInsert(Parser *parser) {
 }
 
 static int addStatement(Parser *parser, StatementType type) {
-    Statement *stmt = malloc(sizeof *stmt);
-    if (!stmt)
-        return 0;
-
-    stmt->rootNode = parser->currentStatement->rootNode;
+    Statement *stmt =  parser->currentStatement;
     stmt->type = type;
-    stmt->next = NULL;
-
+    parser->statements[parser->statementIndex++] = stmt;
+    // stmt->rootNode = parser->
     // append to statements linked list 
-    if (!parser->rootStatement) {
-        parser->rootStatement = stmt;
-    } else {
-        Statement *current = parser->rootStatement;
-        while (current->next)
-            current = current->next;
-        current->next = stmt;
-    }
+    // if (!parser->rootStatement) 
+    //     parser->rootStatement = stmt;
+    // else {
+    //     Statement *current = parser->rootStatement;
+    //     while (current->next)
+    //         current = current->next;
+    //     current->next = stmt;
+    // }
     return 1;
 }
 
 static int parseStatement(Parser *parser) {
     Token *start_token = peek(parser);
     if (!start_token) return 0;
-    Statement *stmt = malloc(sizeof *stmt);
-    if (!stmt) return 0;
-    parser->currentStatement = stmt;
+    parser->currentStatement = malloc(sizeof(*parser->currentStatement));
+
 
     switch (start_token->type) {
         case TOK_SELECT:
@@ -291,16 +286,18 @@ static int parseStatement(Parser *parser) {
     }
 }
 
-Parse *parse(Token **src_tokens, int *tokensSize) {
+Parser *parse(Token **src_tokens, int *tokensSize) {
     if (!src_tokens || !tokensSize || *tokensSize <= 0) return 0;
 
-    Parser parser = {0};
-    parser.tokens = src_tokens;
-    parser.tokens_size = *tokensSize;
-    parser.current_token = src_tokens[0];
+    Parser *parser = calloc(1, sizeof(Parser));
+    parser->tokens = src_tokens;
+    parser->tokensSize = *tokensSize;
+    parser->currentToken = src_tokens[0];
+    parser->statements = calloc(100, sizeof(Statement *));
+    parser->statementIndex = 0;
 
-    while (parser.current_token && !parser.eot) {
-        if (!parseStatement(&parser))
+    while (parser->currentToken && !parser->eot) {
+        if (!parseStatement(parser))
             break;
     }
     return parser;

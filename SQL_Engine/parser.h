@@ -39,7 +39,7 @@ typedef struct TreeNode {
 typedef struct Statement {
     TreeNode *rootNode;
     StatementType type;
-    struct Statement *next;
+    // struct Statement *next;
 } Statement;
 
 typedef struct Parser {
@@ -47,14 +47,16 @@ typedef struct Parser {
     int eot; // end of tokens
     int eos; // end of statements
     Token **tokens;
-    Token *current_token;
-    Statement *rootStatement;
+    Token *currentToken;
+    // Statement **rootStatement;
     Statement *currentStatement;
+    Statement **statements;
+    int statementIndex;
     TreeNode *currentNode;
-    int tokens_size;
-    int tokens_index;
+    int tokensSize;
+    int tokensIndex;
 } Parser;
 
-Parser parse(Token **src_tokens, int *tokensSize); 
+Parser *parse(Token **src_tokens, int *tokensSize); 
 
 #endif // parser_H

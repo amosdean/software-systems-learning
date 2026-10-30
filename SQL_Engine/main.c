@@ -40,11 +40,13 @@ int main(int argc, char* argv[]) {
 	Token **tokens = scanTokens(buffer, file_str_len, tokens_length);
 	// for(int i = 0; i <)
 	// Parser
-	parse(tokens, tokens_length);
+	Parser *parser = parse(tokens, tokens_length);
 	printf("Parsing completed.\n");
+
 	// Schema
 	// schema();
 	// Execute
+	execute(parser->statements, parser->statementIndex);
 		
 	
 	return 0;
