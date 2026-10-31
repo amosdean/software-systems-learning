@@ -141,8 +141,7 @@ static int createTable(Parser *parser) {
           printf("Syntax Error: Expected '(' after table name on line %d\n", token->line);
         return 0; 
     }
-    insertChild(parser); // Add '(' as child of CREATE
-    pop(parser); // Consume '('
+    insertSibling(parser); // Add '(' as child of CREATE and consume
     while (token && strcmp(token->lexeme, ")") != 0) {
         if (!expect(parser, TOK_IDENTIFIER)) return 0; // Expect column name
         insertChild(parser); // Add column name as child of CREATE

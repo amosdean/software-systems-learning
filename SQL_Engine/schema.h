@@ -10,8 +10,13 @@ typedef enum {
     DATA_TYPE_TEXT
 } DataType;
 
+static const char *DATA_TYPES[] = {
+    "INT",
+    "TEXT"
+};
+
 typedef struct {
-    char name[32];
+    char *name;
     DataType type;
 } Column;
 
@@ -22,7 +27,7 @@ typedef struct {
 } TableSchema;
 
 FILE *openSchema(); 
-int schemaAppend(char *table_name, Column *columns, size_t column_count);
+int schemaAppend(char *table_name, Column **columns, size_t column_count);
 int schema();
 
 #endif // schema_H
