@@ -56,22 +56,22 @@ static int expectPunctuation(Parser *parser, const char *expected) {
 TreeNode * createTreeNode(Token *token) {
     TreeNode *node = calloc(1, sizeof(TreeNode));
     node->token = token;
-    node->firstChild = NULL;
-    node->nextSiblingNode = NULL;
+    node->childNode = NULL;
+    node->nextNode = NULL;
     return node;
 }
 
 void insertSibling(Parser *parser) {
     TreeNode *nextNode = createTreeNode(pop(parser));
-    parser->currentNode->nextSiblingNode = nextNode;
+    parser->currentNode->nextNode = nextNode;
     parser->currentNode = nextNode;
 }
 
 void insertChild(Parser *parser) {
-    while(parser->currentNode->firstChild != NULL)
-        parser->currentNode = parser->currentNode->firstChild;
+    while(parser->currentNode->childNode != NULL)
+        parser->currentNode = parser->currentNode->childNode;
     TreeNode *nextNode = createTreeNode(peek(parser));
-    parser->currentNode->firstChild = nextNode;
+    parser->currentNode->childNode = nextNode;
 }
 
 /* Parsing functions */
@@ -250,7 +250,7 @@ static int addStatement(Parser *parser, StatementType type) {
     // else {
     //     Statement *current = parser->rootStatement;
     //     while (current->next)
-    //         current = current->next;
+    //         current = current->nextNode;
     //     current->next = stmt;
     // }
     return 1;

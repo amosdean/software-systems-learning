@@ -32,8 +32,8 @@ typedef enum StatementType {
 
 typedef struct TreeNode {
     Token *token;
-    struct TreeNode *firstChild;
-    struct TreeNode *nextSiblingNode;
+    struct TreeNode *childNode;
+    struct TreeNode *nextNode;
 } TreeNode;
 
 typedef struct Statement {

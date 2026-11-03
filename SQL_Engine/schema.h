@@ -28,6 +28,7 @@ typedef struct {
 
 FILE *openSchema(); 
 int schemaAppend(char *table_name, Column **columns, size_t column_count);
+TableSchema *getTable(char *tableName); 
 int schema();
 
 #endif // schema_H

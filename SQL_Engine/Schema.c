@@ -20,8 +20,28 @@ int schemaAppend(char *table_name, Column **columns, size_t column_count) {
     return 0;
 }
 
+// returns NULL table if no table of that name exists
+TableSchema *getTable(char *tableName) {
+    FILE *fp = openSchema();
+    char line[256];
+    char *table = "TABLE ";
+    char *tableSearchTerm = malloc(strlen(table) + strlen(tableName) + 1);
+    strcpy(tableSearchTerm, table);
+    strcat(tableSearchTerm, tableName);
+    // strcat(tableSearchTerm, "\n");
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (strstr(line, tableSearchTerm)) {
+            printf("Found in: %s", line);
+            fclose(fp);    
+            return malloc(sizeof(TableSchema)); // temporary for testings
+        }
+    }
+    fclose(fp);    
+    return NULL;
+}
+
 FILE *openSchema() {
-    FILE *file = fopen(".\\SQL_Engine\\schema.txt", "a");
+    FILE *file = fopen(".\\SQL_Engine\\schema.txt", "a+");
     if (file == NULL) {
         perror("schema.txt");
         return NULL;

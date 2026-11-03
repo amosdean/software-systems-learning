@@ -4,6 +4,7 @@
 #include "parser.h"
 #include "schema.h"
 #include "execute.h"
+#include "analyze.h"
 
 char * readFile(const char *file, size_t *out_len) {
 	FILE *fp = fopen(file, "rb");
@@ -42,9 +43,8 @@ int main(int argc, char* argv[]) {
 	// Parser
 	Parser *parser = parse(tokens, tokens_length);
 	printf("Parsing completed.\n");
-
-	// Schema
-	// schema();
+	// Analyze
+	analyze(parser->statements, parser->statementIndex);
 	// Execute
 	execute(parser->statements, parser->statementIndex);
 		

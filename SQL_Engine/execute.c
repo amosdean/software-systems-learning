@@ -3,28 +3,36 @@
 #include "parser.h"
 #include "lexer.h"
 #include "schema.h"
+#include "table.h"
 
 int createTable(Statement *stmt) {
     // pull column information from the parse tree and pass it to schemaAppend
     TreeNode *node = stmt->rootNode;
     TreeNode *nextNode;
-    char *tableName = node->firstChild->token->lexeme;
+    char *tableName = node->childNode->token->lexeme;
+
+    TableSchema *ts = getTable(tableName);
+    if(ts != NULL) { 
+        printf("Table \"%s\" already exists\n", tableName);
+        return 0;
+    }
+
     printf("Creating table: %s\n", tableName);
-    nextNode = node->nextSiblingNode->firstChild; // consume '('
+    nextNode = node->nextNode->childNode; // consume '('
     Column **columns = calloc(10, sizeof(Column *));
     int columnsIndex = 0;
     Column *column;
     
     while (nextNode != NULL) {
         node = nextNode;
-        // reset column
+        /* reset column */
         column = malloc(sizeof(Column));
 
-        /* Column Name*/
-        column->name = node->firstChild->token->lexeme;
-        node = node->firstChild; // advance to type
+        /* Column Name */
+        column->name = node->childNode->token->lexeme;
+        node = node->childNode; // advance to type
 
-        /* Column Type*/
+        /* Column Type */
         if(strcmp(node->token->lexeme, "INT"))
             column->type = DATA_TYPE_INTEGER;
         else
@@ -36,8 +44,8 @@ int createTable(Statement *stmt) {
         /* Add to columns*/
         columns[columnsIndex++] = column;
 
-        // advance to next column        
-        nextNode = node->firstChild; 
+        /* advance to next column */ 
+        nextNode = node->childNode; 
     }
     // printf("Exited column while loop\n"); // debug
     schemaAppend(tableName, columns, columnsIndex); // Placeholder for columns

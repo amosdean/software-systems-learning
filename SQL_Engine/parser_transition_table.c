@@ -25,22 +25,22 @@ static int tokens_index;
 TreeNode * createTreeNode(Token *token) {
     TreeNode *node = calloc(1, sizeof(TreeNode));
     node->token = token;
-    node->firstChild = NULL;
-    node->nextSiblingNode = NULL;
+    node->childNode = NULL;
+    node->nextNode = NULL;
     return node;
 }
 
 void insertSibling(TreeNode *node, Token * token) {
     TreeNode *nextNode = createTreeNode(token);
-    node->nextSiblingNode = nextNode;
+    node->nextNode = nextNode;
     currentNode = nextNode;
 }
 
 void insertChild(TreeNode *node, Token *token) {
-    while(node->firstChild != NULL)
-        node = node->firstChild;
+    while(node->childNode != NULL)
+        node = node->childNode;
     TreeNode *nextNode = createTreeNode(token);
-    node->firstChild = nextNode;
+    node->childNode = nextNode;
 }
 // char advance() {
 //     tokens_index++;
