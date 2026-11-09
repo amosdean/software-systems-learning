@@ -1,6 +1,5 @@
 #ifndef schema_H
 #define schema_H
-#include <stddef.h>
 #include <stdio.h>
 
 int schema();
@@ -18,11 +17,12 @@ static const char *DATA_TYPES[] = {
 typedef struct {
     char *name;
     DataType type;
+    int index;
 } Column;
 
 typedef struct {
-    char name[32];
-    Column *columns;
+    char *name;
+    Column **columns;
     size_t column_count;
 } TableSchema;
 

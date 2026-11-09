@@ -30,7 +30,7 @@ TreeNode * createTreeNode(Token *token) {
     return node;
 }
 
-void insertSibling(TreeNode *node, Token * token) {
+void insertNext(TreeNode *node, Token * token) {
     TreeNode *nextNode = createTreeNode(token);
     node->nextNode = nextNode;
     currentNode = nextNode;
@@ -60,7 +60,7 @@ void parse(Token *token) {
             break;
         case PA_TO_FROM:
             state = PS_TO_FROM;
-            insertSibling(currentNode, token);
+            insertNext(currentNode, token);
             break;
         case PA_FROM_TBL:
             state = PS_FROM_TABLE;
@@ -71,7 +71,7 @@ void parse(Token *token) {
             break;
         case PA_TO_WHERE:
             state = PS_W_COND;
-            insertSibling(currentNode, token);
+            insertNext(currentNode, token);
             break;
         case PA_CONT: 
             insertChild(currentNode, token);

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "schema.h"
+const int MAX_COLUMNS = 100;
 
 int schemaAppend(char *table_name, Column **columns, size_t column_count) {
     FILE *file = openSchema();
@@ -28,12 +29,25 @@ TableSchema *getTable(char *tableName) {
     char *tableSearchTerm = malloc(strlen(table) + strlen(tableName) + 1);
     strcpy(tableSearchTerm, table);
     strcat(tableSearchTerm, tableName);
+    TableSchema *ts; 
     // strcat(tableSearchTerm, "\n");
     while (fgets(line, sizeof(line), fp) != NULL) {
         if (strstr(line, tableSearchTerm)) {
-            printf("Found in: %s", line);
+            // found table, initialize schema
+            ts = malloc(sizeof(TableSchema));
+            ts->name = malloc(strlen(tableName) + 1);
+            strcpy(ts->name, tableName);
+            // parse columns
+            ts->column_count = 0;
+            ts->columns = calloc(sizeof(Column *), MAX_COLUMNS); 
+            while (fgets(line, sizeof(line), fp) != NULL && strncmp(line, "TABLE ", 6) != 0) {
+                Column *column = malloc(sizeof(Column));
+                column->name = strtok(line, " ");
+                column->type = atoi(strtok(NULL, " "));
+                ts->columns[ts->column_count++] = column;
+            }
             fclose(fp);    
-            return malloc(sizeof(TableSchema)); // temporary for testings
+            return ts;
         }
     }
     fclose(fp);    
