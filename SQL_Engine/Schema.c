@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "schema.h"
+#include "lexer.h"
+
 const int MAX_COLUMNS = 100;
+// const int NUMBER_OF_DATATYPES = 2; // must match number of entries in DATA_TYPES array
 
 int schemaAppend(char *table_name, Column **columns, size_t column_count) {
     FILE *file = openSchema();
@@ -42,8 +45,14 @@ TableSchema *getTable(char *tableName) {
             ts->columns = calloc(sizeof(Column *), MAX_COLUMNS); 
             while (fgets(line, sizeof(line), fp) != NULL && strncmp(line, "TABLE ", 6) != 0) {
                 Column *column = malloc(sizeof(Column));
-                column->name = strtok(line, " ");
-                column->type = atoi(strtok(NULL, " "));
+                strtok(line, " "); // skip "COLUMN"
+                char *name = strtok(NULL, " ");
+                column->name = malloc(strlen(name) + 1);
+                strcpy(column->name, name);
+                char *type = strtok(NULL, "\n");
+                DataType columnType = strtol(type, NULL, 10); // convert type to integer
+                column->type = columnType;
+                column->index = ts->column_count;
                 ts->columns[ts->column_count++] = column;
             }
             fclose(fp);    

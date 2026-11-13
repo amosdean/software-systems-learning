@@ -1,18 +1,9 @@
 #ifndef schema_H
 #define schema_H
 #include <stdio.h>
+#include "lexer.h"
 
 int schema();
-
-typedef enum {
-    DATA_TYPE_INTEGER,
-    DATA_TYPE_TEXT
-} DataType;
-
-static const char *DATA_TYPES[] = {
-    "INT",
-    "TEXT"
-};
 
 typedef struct {
     char *name;

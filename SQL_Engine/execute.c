@@ -10,7 +10,7 @@ DataType TranslateDataType(Token *token) {
         case TOK_NUMBER:
             return DATA_TYPE_INTEGER;
         case TOK_IDENTIFIER:
-            return DATA_TYPE_TEXT;
+            return DATA_TYPE_VARCHAR;
         default:
             return -1; // Invalid type
     }
@@ -40,14 +40,14 @@ int createTable(Statement *stmt) {
         column = malloc(sizeof(Column));
 
         /* Column Name */
-        column->name = node->childNode->token->lexeme;
+        column->name = node->token->lexeme;
         node = node->childNode; // advance to type
 
         /* Column Type */
-        if(strcmp(node->token->lexeme, "INT"))
+        if(!strcmp(node->token->lexeme, "INT"))
             column->type = DATA_TYPE_INTEGER;
         else
-            column->type = DATA_TYPE_TEXT;
+            column->type = DATA_TYPE_VARCHAR;
 
         /* Debug */
         printf("Column name: %s, Column Type: %s, index: %d\n", column->name, DATA_TYPES[column->type], columnsIndex);
@@ -84,23 +84,23 @@ int executeInsert(Statement *stmt) {
     char *columnsToInsert[100][100] = {0}; // Assuming a maximum of 100 columns and 100 rows for simplicity
     size_t rowIndex = 0;
     // node = node->childNode; // Move to the '('
-    while(node->childNode != NULL) { // multiple rows
+    while(node != NULL) { // multiple rows
         for (size_t i = 0; i < ts->column_count; i++) {
             if (ts->columns[i]->type != TranslateDataType(node->token)) {
+                TranslateDataType(node->token);
                 printf("Syntax Error: Expected value (identifier or number) on line %d\n", node->token->line);
                 return 0;
             }
             columnsToInsert[rowIndex][i] = malloc(strlen(node->token->lexeme) + 1);
             strcpy(columnsToInsert[rowIndex][i], node->token->lexeme);
             node = node->childNode; // Move to the next value
-            if (node == NULL) {
+            if (node == NULL && i < ts->column_count - 1) {
                 printf("Syntax Error: Mismatched number of values for table \"%s\"\n", tableName);
                 return 0;
             }
-            node = node->childNode; 
         }
         rowIndex++;
-        node = node->childNode; // Move to the next row
+        // node = node->childNode; // Move to the next row
     }
     /* Execute INSERT */
     char *filePath = malloc(strlen(".\\SQL_Engine\\") + strlen(tableName) + strlen(".tbl") + 1);
@@ -117,9 +117,8 @@ int executeInsert(Statement *stmt) {
     for (size_t i = 0; i < rowIndex; i++) {
         for (size_t j = 0; j < ts->column_count; j++) {
             fprintf(file, "%s", columnsToInsert[i][j]);
-            if (j < ts->column_count - 1) {
-                fprintf(file, ",");
-            }
+            if (j < ts->column_count - 1) 
+                fprintf(file, "|");
         }
         fprintf(file, "\n");
     }
@@ -137,6 +136,7 @@ int execute(Statement **statements, int statement_count) {
                 break;
             case ST_INSERT:
                 printf("Executing INSERT statement\n");
+                executeInsert(stmt);
                 break;
             case ST_CREATE:
                 printf("Executing CREATE TABLE statement\n");

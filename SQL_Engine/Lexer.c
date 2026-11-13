@@ -77,7 +77,7 @@ void addToken(TokenType type) {
                 token->type = i; 
                 break;
             }
-            if(i < NUMBER_OF_DATATYPES && !strcmp(strupr(str), DATATYPES[i])) {
+            if(i < NUMBER_OF_DATATYPES && !strcmp(strupr(str), DATA_TYPES[i])) {
                 token->type = TOK_DATATYPE; 
                 break;
             }

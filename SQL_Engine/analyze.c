@@ -11,7 +11,7 @@ DataType TranslateDataType(Token *token) {
         case TOK_NUMBER:
             return DATA_TYPE_INTEGER;
         case TOK_IDENTIFIER:
-            return DATA_TYPE_TEXT;
+            return DATA_TYPE_VARCHAR;
         default:
             return -1; // Invalid type
     }

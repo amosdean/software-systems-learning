@@ -19,6 +19,20 @@ typedef enum {
     TOK_EOF
 } TokenType;
 
+/* Data types */
+static const int NUMBER_OF_DATATYPES = 5; 
+typedef enum {
+    DATA_TYPE_INTEGER,
+    DATA_TYPE_VARCHAR
+} DataType;
+static const char *DATA_TYPES[] = {  // must match order of DataType enum and update NUMBER_OF_DATATYPES changed
+    "INT",
+    "VARCHAR",
+    "CHAR",
+    "FLOAT",
+    "DOUBLE"
+};
+
 static const char *KEYWORDS[] = {
     "SELECT",
     "FROM",
@@ -30,16 +44,8 @@ static const char *KEYWORDS[] = {
     "VALUES"
 };
 
-static const char *DATATYPES[] = {
-    "INT",
-    "VARCHAR",
-    "CHAR",
-    "FLOAT",
-    "DOUBLE"
-};
 
 static const int NUMBER_OF_KEYWORDS = 8;
-static const int NUMBER_OF_DATATYPES = 5;
 
 enum lexerState {
     LEX_START
