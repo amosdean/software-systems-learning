@@ -24,7 +24,6 @@ char * readFile(const char *file, size_t *out_len) {
 	*out_len = nread;
 	buf[*out_len] = '\0';
 	return buf;
-
 }
 
 int main(int argc, char* argv[]) {
@@ -35,19 +34,33 @@ int main(int argc, char* argv[]) {
 	size_t file_str_len = 0;
 	char * buffer = readFile(argv[1], &file_str_len);
 	printf("%s", buffer);
+
 	// lexer
 	int *tokens_length = malloc(sizeof(int));
 	*tokens_length = 0;
 	Token **tokens = scanTokens(buffer, file_str_len, tokens_length);
-	// for(int i = 0; i <)
+
 	// Parser
 	Parser *parser = parse(tokens, tokens_length);
-	printf("Parsing completed.\n");
+
 	// Analyze
 	// analyze(parser->statements, parser->statementIndex);
+
 	// Execute
 	execute(parser->statements, parser->statementIndex);
-		
 	
+	for(int i = 0; i < *tokens_length; i++) {
+		if(tokens[i]->lexeme != NULL)
+			free(tokens[i]->lexeme);
+		free(tokens[i]);
+	}
+	for(int i = 0; i < parser->statementIndex; i++) {
+		free(parser->statements[i]);
+	}
+	free(tokens);
+	free(parser->statements);
+	free(parser);
+	free(buffer);
+	free(tokens_length);
 	return 0;
 }

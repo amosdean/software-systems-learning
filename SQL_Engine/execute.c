@@ -60,6 +60,13 @@ int createTable(Statement *stmt) {
     }
     // printf("Exited column while loop\n"); // debug
     schemaAppend(tableName, columns, columnsIndex); // Placeholder for columns
+
+    /* Memory Cleanup */ 
+    for (int i = 0; i < columnsIndex; i++)
+        free(columns[i]);
+    free(columns);
+    free(ts);
+
     return 1; 
 }
 
@@ -100,8 +107,8 @@ int executeInsert(Statement *stmt) {
             }
         }
         rowIndex++;
-        // node = node->childNode; // Move to the next row
     }
+
     /* Execute INSERT */
     char *filePath = malloc(strlen(".\\SQL_Engine\\") + strlen(tableName) + strlen(".tbl") + 1);
     sprintf(filePath, ".\\SQL_Engine\\%s.tbl", tableName);
@@ -123,7 +130,16 @@ int executeInsert(Statement *stmt) {
         fprintf(file, "\n");
     }
     fclose(file);
+
+    /* Memory Cleanup */
     free(filePath);
+    for (size_t i = 0; i < rowIndex; i++) {
+        for (size_t j = 0; j < ts->column_count; j++) {
+            free(columnsToInsert[i][j]);
+        }
+    }
+    free(ts);
+
     return 1;
 }
 
