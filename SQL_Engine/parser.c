@@ -68,10 +68,11 @@ void insertNext(Parser *parser) {
 }
 
 void insertChild(Parser *parser) {
-    while(parser->currentNode->childNode != NULL)
-        parser->currentNode = parser->currentNode->childNode;
+    TreeNode *indexNode = parser->currentNode;
+    while(indexNode->childNode != NULL)
+        indexNode = indexNode->childNode;
     TreeNode *nextNode = createTreeNode(peek(parser));
-    parser->currentNode->childNode = nextNode;
+    indexNode->childNode = nextNode;
 }
 
 /* Parsing functions */
@@ -90,6 +91,10 @@ static int parseColumns(Parser *parser) {
         insertChild(parser);
         pop(parser);
         token = peek(parser);
+        if (token && token->type == TOK_OTHER && strcmp(token->lexeme, ",") == 0) {
+            pop(parser); // Consume the comma.
+            token = peek(parser);
+        }
     }
 
     return token != NULL;

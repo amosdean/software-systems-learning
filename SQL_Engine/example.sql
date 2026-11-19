@@ -3,4 +3,3 @@ CREATE TABLE myTable (
     user VARCHAR
 );
 INSERT INTO myTable VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');
-select user from myTable;

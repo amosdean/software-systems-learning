@@ -1,0 +1,1 @@
+select id, user from mytable;

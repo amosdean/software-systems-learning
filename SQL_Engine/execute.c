@@ -3,7 +3,7 @@
 #include "parser.h"
 #include "lexer.h"
 #include "schema.h"
-#include "table.h"
+#include "execute.h"
 
 DataType TranslateDataType(Token *token) {
     switch (token->type) {
@@ -118,6 +118,8 @@ int executeInsert(Statement *stmt) {
         file = fopen(filePath, "w");
         if (file == NULL) {
             printf("Error accessing table file for \"%s\"\n", tableName);
+            free(filePath);
+            free(ts);
             return 0;
         }
     }
@@ -139,6 +141,129 @@ int executeInsert(Statement *stmt) {
         }
     }
     free(ts);
+    return 1;
+}
+
+TableRead *readTableData(char *tableName) {
+    TableSchema *ts = getTable(tableName);
+    if(ts == NULL) {
+        printf("Error: Table \"%s\" not found\n", tableName);
+        free(ts);
+        return NULL;
+    }
+    char *filePath = malloc(strlen(".\\SQL_Engine\\") + strlen(tableName) + strlen(".tbl") + 1);
+    sprintf(filePath, ".\\SQL_Engine\\%s.tbl", tableName);
+    FILE *file = fopen(filePath, "r");
+    if (file == NULL) {
+        printf("Error: Could not open table file for \"%s\"\n", tableName);
+        free(filePath);
+        return NULL;
+    }
+
+    char line[1024];
+    TableRead *tableRead = malloc(sizeof(TableRead));
+    tableRead->rowCount = 0;
+    while (fgets(line, sizeof(line), file)) {
+        line[strcspn(line, "\r\n")] = '\0'; // remove newline
+        // split the line by '|' and store in tableRead->rows
+        if(tableRead->rowCount == 0) {
+            tableRead->rows = malloc(sizeof(Row));
+        } else {
+            tableRead->rows = realloc(tableRead->rows, (tableRead->rowCount + 1) * sizeof(Row));
+        }
+        Row *row = &tableRead->rows[tableRead->rowCount];
+        row->values = malloc(ts->column_count * sizeof(Value));
+        char *token = strtok(line, "|");
+        size_t columnIndex = 0;
+        while (token != NULL && columnIndex < ts->column_count) {
+            if (ts->columns[columnIndex]->type == DATA_TYPE_INTEGER) {
+                row->values[columnIndex].type = VALUE_INT;
+                row->values[columnIndex].data.integer = atoi(token);
+            } else {
+                row->values[columnIndex].type = VALUE_STRING;
+                row->values[columnIndex].data.string = malloc(strlen(token) + 1);
+                strcpy(row->values[columnIndex].data.string, token);
+                
+            }
+            token = strtok(NULL, "|");
+            columnIndex++;
+        }
+        tableRead->rowCount++;
+    }
+    // free memory
+    fclose(file);
+    free(filePath);
+    return tableRead;
+}
+
+int* analyzeSelect(Statement *stmt) {
+    TreeNode *node = stmt->rootNode;
+    node = node->nextNode->childNode; // Move to the table name
+    char *tableName = node->token->lexeme;
+
+    TableSchema *ts = getTable(tableName);
+    if(ts == NULL) {
+        printf("Error: Table \"%s\" not found\n", tableName);
+        return NULL;
+    }
+
+    int *columnsToSelect = malloc(ts->column_count * sizeof(int));
+    for (int i = 0; i < ts->column_count; i++)
+        columnsToSelect[i] = -1; // Initialize with -1 to indicate not selected
+    int selectedColumnIndex = 0;
+    node = stmt->rootNode->childNode;
+    while (node != NULL) {
+        char *columnName = node->token->lexeme;
+        int columnFound = 0;
+        for (size_t i = 0; i < ts->column_count; i++) {
+            if (strcmp(ts->columns[i]->name, columnName) == 0) {
+                columnFound = 1;
+                columnsToSelect[selectedColumnIndex++] = i; // Store the index of the column
+                break;
+            }
+        }
+        if (!columnFound) {
+            printf("Error: Column \"%s\" not found in table \"%s\"\n", columnName, tableName);
+            free(ts);
+            return NULL;
+        }
+        node = node->childNode; // Move to the next column
+    }
+    
+    free(ts);
+    return columnsToSelect; // Indicate success
+}
+
+int executeSelect(Statement *stmt) {
+    TreeNode *selectNode = stmt->rootNode;
+    // selectNode = selectNode->nextNode; 
+    int *columnsSelected = analyzeSelect(stmt);
+    TableRead *tableRead = readTableData(selectNode->nextNode->childNode->token->lexeme);
+    TableSchema *ts = getTable(selectNode->nextNode->childNode->token->lexeme);
+    if(tableRead == NULL) {
+        return 0;
+    }
+    // Print the selected columns
+    for (size_t i = 0; i < tableRead->rowCount; i++) {
+        Row *row = &tableRead->rows[i];
+        for(size_t selectColumnIndex = 0; selectColumnIndex < sizeof(columnsSelected) / sizeof(int); selectColumnIndex++) {
+            int columnIndex = columnsSelected[selectColumnIndex];
+            if (columnIndex == -1) 
+                break; // No more columns to select
+            if (selectColumnIndex > 0)
+                printf(" | ");
+            if (row->values[columnIndex].type == VALUE_INT)
+                printf("%d", row->values[columnIndex].data.integer);
+            else
+                printf("%s", row->values[columnIndex].data.string);
+        }
+        printf("\n");
+    }
+
+    // Free allocated memory
+    free(columnsSelected);
+    // freeTableRead(tableRead);
+    free(ts);
 
     return 1;
 }
@@ -149,6 +274,7 @@ int execute(Statement **statements, int statement_count) {
         switch (stmt->type) {
             case ST_SELECT:
                 printf("Executing SELECT statement\n");
+                executeSelect(stmt);
                 break;
             case ST_INSERT:
                 printf("Executing INSERT statement\n");
