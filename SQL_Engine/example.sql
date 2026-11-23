@@ -1,5 +1,0 @@
-CREATE TABLE myTable (
-    id INT,
-    user VARCHAR
-);
-INSERT INTO myTable VALUES (1, 'Alice'), (2, 'Bob'), (3, 'Charlie');

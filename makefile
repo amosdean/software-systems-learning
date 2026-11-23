@@ -25,7 +25,9 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 run: $(TARGET)
-	./$(TARGET) ./SQL_Engine/example_select.sql
+# 	./$(TARGET) ./SQL_Engine/Queries/create.sql
+# 	./$(TARGET) ./SQL_Engine/Queries/insert.sql
+	./$(TARGET) ./SQL_Engine/Queries/select.sql
 
 clean:
 	$(RM) $(CLEAN_FILES) $(TARGET)$(TARGET_SUFFIX)

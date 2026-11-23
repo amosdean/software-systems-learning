@@ -5,6 +5,8 @@
 #include "schema.h"
 #include "execute.h"
 
+static const char *TABLE_DIR = ".\\SQL_Engine\\DB\\Tables\\";
+
 DataType TranslateDataType(Token *token) {
     switch (token->type) {
         case TOK_NUMBER:
@@ -110,8 +112,8 @@ int executeInsert(Statement *stmt) {
     }
 
     /* Execute INSERT */
-    char *filePath = malloc(strlen(".\\SQL_Engine\\") + strlen(tableName) + strlen(".tbl") + 1);
-    sprintf(filePath, ".\\SQL_Engine\\%s.tbl", tableName);
+    char *filePath = malloc(strlen(TABLE_DIR) + strlen(tableName) + strlen(".tbl") + 1);
+    sprintf(filePath, "%s%s.tbl", TABLE_DIR, tableName);
     FILE *file = fopen(filePath, "a+");
     if (file == NULL) {
         // create the file if it doesn't exist
@@ -151,8 +153,8 @@ TableRead *readTableData(char *tableName) {
         free(ts);
         return NULL;
     }
-    char *filePath = malloc(strlen(".\\SQL_Engine\\") + strlen(tableName) + strlen(".tbl") + 1);
-    sprintf(filePath, ".\\SQL_Engine\\%s.tbl", tableName);
+    char *filePath = malloc(strlen(TABLE_DIR) + strlen(tableName) + strlen(".tbl") + 1);
+    sprintf(filePath, "%s%s.tbl", TABLE_DIR, tableName);
     FILE *file = fopen(filePath, "r");
     if (file == NULL) {
         printf("Error: Could not open table file for \"%s\"\n", tableName);

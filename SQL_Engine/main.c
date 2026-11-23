@@ -33,6 +33,10 @@ int main(int argc, char* argv[]) {
 	}
 	size_t file_str_len = 0;
 	char * buffer = readFile(argv[1], &file_str_len);
+	if (buffer == NULL) {
+		printf("Error reading file: %s\n", argv[1]);
+		return 1;
+	}
 	printf("%s", buffer);
 
 	// lexer
@@ -42,9 +46,6 @@ int main(int argc, char* argv[]) {
 
 	// Parser
 	Parser *parser = parse(tokens, tokens_length);
-
-	// Analyze
-	// analyze(parser->statements, parser->statementIndex);
 
 	// Execute
 	execute(parser->statements, parser->statementIndex);

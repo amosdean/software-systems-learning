@@ -64,7 +64,7 @@ TableSchema *getTable(char *tableName) {
 }
 
 FILE *openSchema() {
-    FILE *file = fopen(".\\SQL_Engine\\schema.txt", "a+");
+    FILE *file = fopen(".\\SQL_Engine\\DB\\schema.txt", "a+");
     if (file == NULL) {
         perror("schema.txt");
         return NULL;

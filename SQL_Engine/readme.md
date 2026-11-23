@@ -1,5 +1,5 @@
  # SQL Lexer & Parser
-A simple SQL lexer and parser written in C. SQL engine to come later
+A simple SQL lexer/parser, basic commands written in C. 
 
 
 ## Build & Run
